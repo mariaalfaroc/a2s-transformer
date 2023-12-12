@@ -396,3 +396,9 @@ FodyWeavers.xsd
 
 # JetBrains Rider
 *.sln.iml
+
+# Extras
+Quartets
+joblib_cache
+wandb
+weights
