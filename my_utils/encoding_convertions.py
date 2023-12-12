@@ -13,8 +13,8 @@ class krnParser:
         self.reserved_dot_EncodedCharacter = "DOT"
         self.clef_change_other_voices = "*"
         self.comment_symbols = ["*", "!"]
-        self.voice_change = "\t"
-        self.step_change = "\n"
+        self.voice_change = "<COC>"  # change-of-column (coc) token
+        self.step_change = "<COR>"  # change-of-row (cor) token
 
     # ---------------------------------------------------------------------------- AUXILIARY FUNCTIONS
 
