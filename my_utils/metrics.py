@@ -7,11 +7,6 @@ from pyMV2H.metrics.mv2h import mv2h
 from pyMV2H.utils.music import Music
 from pyMV2H.converter.midi_converter import MidiConverter as Converter
 
-# NOTE:
-# The Quartets collection is a polyphonic collection with a constant number of voices (4)
-# The MV2H computation of this script is not general enough to handle any number of voices
-NUM_VOICES = 4
-
 
 def compute_metrics(y_true, y_pred):
     ################################# Sym-ER and Seq-ER:
@@ -112,22 +107,27 @@ def compute_mv2h_metrics(y_true, y_pred):
 
     ########################################### Monophonic evaluation:
 
-    def divide_voice(in_file, out_file, voice):
+    def get_number_of_voices(in_file):
+        with open(in_file) as fin:
+            read_file = fin.readlines()
+        return len(read_file[0].split("\t"))
+
+    def divide_voice(in_file, out_file, it_voice):
         # Open file
         with open(in_file) as fin:
             read_file = fin.readlines()
 
         # Read voice
-        voice = [u.split("\t")[voice].strip() for u in read_file]
+        voice = [u.split("\t")[it_voice].strip() for u in read_file]
 
         # Write voice
         with open(out_file, "w") as fout:
             for token in voice:
                 fout.write(token + "\n")
 
-    def eval_as_monophonic():
+    def eval_as_monophonic(num_voices):
         global_res_dict = MV2H(multi_pitch=0, voice=0, meter=0, harmony=0, note_value=0)
-        for it_voice in range(NUM_VOICES):
+        for it_voice in range(num_voices):
             # Convert to MIDI
             divide_voice("true.krn", "true_voice.krn", it_voice)
             reference_midi_file = krn2midi("true_voice.krn")
@@ -156,28 +156,28 @@ def compute_mv2h_metrics(y_true, y_pred):
             os.remove(reference_txt_file)
             os.remove(predicted_txt_file)
 
-        global_res_dict.__multi_pitch__ /= NUM_VOICES
-        global_res_dict.__voice__ /= NUM_VOICES
-        global_res_dict.__meter__ /= NUM_VOICES
-        global_res_dict.__harmony__ /= NUM_VOICES
-        global_res_dict.__note_value__ /= NUM_VOICES
+        global_res_dict.__multi_pitch__ /= num_voices
+        global_res_dict.__voice__ /= num_voices
+        global_res_dict.__meter__ /= num_voices
+        global_res_dict.__harmony__ /= num_voices
+        global_res_dict.__note_value__ /= num_voices
 
         return global_res_dict
 
     ########################################### MV2H evaluation:
 
-    def create_kern_file(out_file, kern):
+    def create_kern_file(out_file, kern, num_voices):
         with open(out_file, "w") as fout:
             # Kern header
-            fout.write("\t".join(["**kern"] * NUM_VOICES) + "\n")
+            fout.write("\t".join(["**kern"] * num_voices) + "\n")
 
             # Iterating through the lines
             line = []
-            for token in kern[it_piece]:
+            for token in kern:
                 if token == "<b>":
                     if len(line) > 0:
-                        if len(line) < NUM_VOICES:
-                            line.extend(["."] * (NUM_VOICES - len(line)))
+                        if len(line) < num_voices:
+                            line.extend(["."] * (num_voices - len(line)))
                         fout.write("\t".join(line) + "\n")
                     line = []
                 else:
@@ -187,14 +187,17 @@ def compute_mv2h_metrics(y_true, y_pred):
                         line.append(".")
 
     MV2H_global = MV2H(multi_pitch=0, voice=0, meter=0, harmony=0, note_value=0)
-    for it_piece in range(len(y_true)):
+    for t, h in zip(y_true, y_pred):
+        # Get number of voices
+        num_voices = get_number_of_voices(t)
+
         # GROUND TRUTH
         # Creating ground truth Kern file
-        create_kern_file("true.krn", y_true)
+        create_kern_file("true.krn", t, num_voices)
 
         # PREDICTION
         # Creating predicted Kern file
-        create_kern_file("pred.krn", y_pred)
+        create_kern_file("pred.krn", h, num_voices)
 
         # Testing whether predicted Kern can be processed as polyphonic
         flag_polyphonic_kern = True
