@@ -1,0 +1,6 @@
+fire
+librosa
+lightning
+music21
+pyMV2H
+torchinfo
