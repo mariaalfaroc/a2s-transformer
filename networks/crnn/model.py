@@ -1,16 +1,16 @@
 import random
 
 import torch
+import lightning as L
 from torch.nn import CTCLoss
 from torchinfo import summary
-from lightning.pytorch import LightningModule
 
 from networks.crnn.modules import CRNN
 from my_utils.metrics import compute_metrics
 from my_utils.data_preprocessing import IMG_HEIGHT, NUM_CHANNELS
 
 
-class CTCTrainedCRNN(LightningModule):
+class CTCTrainedCRNN(L.LightningModule):
     def __init__(self, w2i, i2w, ytest_i2w=None, num_frame_repeats=16):
         super(CTCTrainedCRNN, self).__init__()
         # Save hyperparameters
