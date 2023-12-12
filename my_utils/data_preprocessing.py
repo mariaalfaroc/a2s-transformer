@@ -44,10 +44,10 @@ def pad_batch_images(x):
     return x
 
 
-def pad_batch_transcripts(x):
+def pad_batch_transcripts(x, dtype="int32"):
     max_length = max(x, key=lambda sample: sample.shape[0]).shape[0]
     x = torch.stack([F.pad(i, pad=(0, max_length - i.shape[0])) for i in x], dim=0)
-    x = x.type(torch.int32)
+    x = x.type(dtype=dtype)
     return x
 
 
@@ -60,3 +60,19 @@ def ctc_batch_preparation(batch):
     y = pad_batch_transcripts(y)
     yl = torch.tensor(yl, dtype=torch.int32)
     return x, xl, y, yl
+
+
+################################# AE PREPROCESSING:
+
+
+def ae_batch_preparation(batch):
+    x, y = zip(*batch)
+    # Zero-pad images to maximum batch image width
+    x = pad_batch_images(x)
+    # Decoder input: transcript[:-1]
+    y_in = [i[:-1] for i in y]
+    y_in = pad_batch_transcripts(y_in, dtype="int64")
+    # Decoder target: transcript[1:]
+    y_out = [i[1:] for i in y]
+    y_out = pad_batch_transcripts(y_out, dtype="int64")
+    return x, y_in, y_out

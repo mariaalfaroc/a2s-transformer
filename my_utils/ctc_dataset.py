@@ -16,12 +16,14 @@ class CTCDataModule(L.LightningDataModule):
     def __init__(
         self,
         ds_name: str,
+        use_voice_change_token: bool = False,
         batch_size: int = 16,
         num_workers: int = 20,
         width_reduction: int = None,
     ):
         super(CTCDataModule).__init__()
         self.ds_name = ds_name
+        self.use_voice_change_token = use_voice_change_token
         self.batch_size = batch_size
         self.num_workers = num_workers
 
@@ -38,11 +40,13 @@ class CTCDataModule(L.LightningDataModule):
                 ds_name=self.ds_name,
                 partition_type="train",
                 width_reduction=self.width_reduction,
+                use_voice_change_token=self.use_voice_change_token,
             )
             self.val_ds = CTCDataset(
                 ds_name=self.ds_name,
                 partition_type="val",
                 width_reduction=self.width_reduction,
+                use_voice_change_token=self.use_voice_change_token,
             )
 
         if stage == "test" or stage == "predict":
@@ -50,6 +54,7 @@ class CTCDataModule(L.LightningDataModule):
                 ds_name=self.ds_name,
                 partition_type="test",
                 width_reduction=self.width_reduction,
+                use_voice_change_token=self.use_voice_change_token,
             )
 
     def train_dataloader(self):
@@ -97,7 +102,9 @@ class CTCDataset(Dataset):
         self.partition_type = partition_type
         self.width_reduction = width_reduction
         self.use_voice_change_token = use_voice_change_token
+        self.setup(vocab_name="ctc_w2i")
 
+    def setup(self, vocab_name: str = "w2i"):
         # Initialize krn parser
         self.krn_parser = krnParser()
 
@@ -117,7 +124,7 @@ class CTCDataset(Dataset):
         # Check and retrieve vocabulary
         vocab_folder = os.path.join("Quartets", "vocabs")
         os.makedirs(vocab_folder, exist_ok=True)
-        vocab_name = self.ds_name + "_w2i"
+        vocab_name = self.ds_name + f"_{vocab_name}"
         vocab_name += "_withvc" if self.use_voice_change_token else ""
         vocab_name += ".json"
         self.w2i_path = os.path.join(vocab_folder, vocab_name)
@@ -129,13 +136,13 @@ class CTCDataset(Dataset):
     def __getitem__(self, idx):
         # CTC training setting
         x = preprocess_audio(path=self.X[idx])
-        y = self.preprocess_ctc_transcript(path=self.Y[idx])
+        y = self.preprocess_transcript(path=self.Y[idx])
         if self.partition_type == "train":
             # x.shape = [channels, height, width]
             return x, x.shape[2] // self.width_reduction, y, len(y)
         return x, y
 
-    def preprocess_ctc_transcript(self, path: str):
+    def preprocess_transcript(self, path: str):
         y = self.krn_parser.convert(src_file=path)
         if not self.use_voice_change_token:
             y = [w for w in y if w != self.krn_parser.voice_change]
@@ -169,7 +176,7 @@ class CTCDataset(Dataset):
 
         return w2i, i2w
 
-    def make_vocabulary(self):
+    def get_unique_tokens(self):
         vocab = []
         for partition_type in ["train", "val", "test"]:
             partition_file = f"Quartets/partitions/{self.ds_name}/{partition_type}.txt"
@@ -182,6 +189,10 @@ class CTCDataset(Dataset):
         vocab = sorted(set(vocab))
         if not self.use_voice_change_token:
             del vocab[vocab.index(self.krn_parser.voice_change)]
+        return vocab
+
+    def make_vocabulary(self):
+        vocab = self.get_unique_tokens()
 
         w2i = {}
         i2w = {}
