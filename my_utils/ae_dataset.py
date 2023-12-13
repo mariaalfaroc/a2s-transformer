@@ -72,6 +72,15 @@ class AEDataModule(L.LightningDataModule):
         print("Using test_dataloader for predictions.")
         return self.test_dataloader(self)
 
+    def get_w2i_and_i2w(self):
+        return self.train_ds.w2i, self.train_ds.i2w
+
+    def get_max_seq_len(self):
+        return self.train_ds.max_seq_len
+
+    def get_max_audio_len(self):
+        return self.train_ds.max_audio_len
+
 
 ####################################################################################################
 
@@ -102,7 +111,7 @@ class AEDataset(CTCDataset):
         return torch.tensor(y, dtype=torch.int64)
 
     def make_vocabulary(self):
-        vocab = self.get_unique_tokens()
+        vocab = self.get_unique_tokens_and_max_seq_len()[0]
         vocab = [SOS_TOKEN, EOS_TOKEN] + vocab
         vocab = sorted(vocab)
 

@@ -86,6 +86,15 @@ class CTCDataModule(L.LightningDataModule):
         print("Using test_dataloader for predictions.")
         return self.test_dataloader(self)
 
+    def get_w2i_and_i2w(self):
+        return self.train_ds.w2i, self.train_ds.i2w
+
+    def get_max_seq_len(self):
+        return self.train_ds.max_seq_len
+
+    def get_max_audio_len(self):
+        return self.train_ds.max_audio_len
+
 
 ####################################################################################################
 
@@ -129,6 +138,12 @@ class CTCDataset(Dataset):
         vocab_name += ".json"
         self.w2i_path = os.path.join(vocab_folder, vocab_name)
         self.w2i, self.i2w = self.check_and_retrieve_vocabulary()
+
+        # Set max_seq_len
+        self.set_max_seq_len()
+
+        # Set max_audio_len
+        self.set_max_audio_len()
 
     def __len__(self):
         return len(self.X)
@@ -176,23 +191,26 @@ class CTCDataset(Dataset):
 
         return w2i, i2w
 
-    def get_unique_tokens(self):
+    def get_unique_tokens_and_max_seq_len(self):
+        max_seq_len = 0
         vocab = []
         for partition_type in ["train", "val", "test"]:
             partition_file = f"Quartets/partitions/{self.ds_name}/{partition_type}.txt"
             with open(partition_file, "r") as file:
                 for s in file.read().splitlines():
                     s = s.strip()
-                    vocab.extend(
-                        self.krn_parser.convert(src_file=f"Quartets/krn/{s}.krn")
+                    transcript = self.krn_parser.convert(
+                        src_file=f"Quartets/krn/{s}.krn"
                     )
+                    max_seq_len = max(max_seq_len, len(transcript))
+                    vocab.extend(transcript)
         vocab = sorted(set(vocab))
         if not self.use_voice_change_token:
             del vocab[vocab.index(self.krn_parser.voice_change)]
-        return vocab
+        return vocab, max_seq_len
 
     def make_vocabulary(self):
-        vocab = self.get_unique_tokens()
+        vocab = self.get_unique_tokens_and_max_seq_len()[0]
 
         w2i = {}
         i2w = {}
@@ -203,3 +221,17 @@ class CTCDataset(Dataset):
         i2w[0] = "<PAD>"
 
         return w2i, i2w
+
+    def set_max_seq_len(self):
+        self.max_seq_len = self.get_unique_tokens_and_max_seq_len()[1]
+
+    def set_max_audio_len(self):
+        max_audio_len = 0
+        for partition_type in ["train", "val", "test"]:
+            partition_file = f"Quartets/partitions/{self.ds_name}/{partition_type}.txt"
+            with open(partition_file, "r") as file:
+                for s in file.read().splitlines():
+                    s = s.strip()
+                    audio = preprocess_audio(path=f"Quartets/flac/{s}.flac")
+                    max_audio_len = max(max_audio_len, audio.shape[2])
+        self.max_audio_len = max_audio_len
