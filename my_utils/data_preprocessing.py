@@ -62,10 +62,10 @@ def ctc_batch_preparation(batch):
     return x, xl, y, yl
 
 
-################################# AE PREPROCESSING:
+################################# AR PREPROCESSING:
 
 
-def ae_batch_preparation(batch):
+def ar_batch_preparation(batch):
     x, y = zip(*batch)
     # Zero-pad images to maximum batch image width
     x = pad_batch_images(x)

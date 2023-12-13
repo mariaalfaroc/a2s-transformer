@@ -3,13 +3,13 @@ import lightning as L
 from torch.utils.data import DataLoader
 
 from my_utils.ctc_dataset import CTCDataset
-from my_utils.data_preprocessing import preprocess_audio, ae_batch_preparation
+from my_utils.data_preprocessing import preprocess_audio, ar_batch_preparation
 
 SOS_TOKEN = "<SOS>"  # Start-of-sequence token
 EOS_TOKEN = "<EOS>"  # End-of-sequence token
 
 
-class AEDataModule(L.LightningDataModule):
+class ARDataModule(L.LightningDataModule):
     def __init__(
         self,
         ds_name: str,
@@ -17,7 +17,7 @@ class AEDataModule(L.LightningDataModule):
         batch_size: int = 16,
         num_workers: int = 20,
     ):
-        super(AEDataModule).__init__()
+        super(ARDataModule).__init__()
         self.ds_name = ds_name
         self.use_voice_change_token = use_voice_change_token
         self.batch_size = batch_size
@@ -25,19 +25,19 @@ class AEDataModule(L.LightningDataModule):
 
     def setup(self, stage: str):
         if stage == "fit":
-            self.train_ds = AEDataset(
+            self.train_ds = ARDataset(
                 ds_name=self.ds_name,
                 partition_type="train",
                 use_voice_change_token=self.use_voice_change_token,
             )
-            self.val_ds = AEDataset(
+            self.val_ds = ARDataset(
                 ds_name=self.ds_name,
                 partition_type="val",
                 use_voice_change_token=self.use_voice_change_token,
             )
 
         if stage == "test" or stage == "predict":
-            self.test_ds = AEDataset(
+            self.test_ds = ARDataset(
                 ds_name=self.ds_name,
                 partition_type="test",
                 use_voice_change_token=self.use_voice_change_token,
@@ -49,7 +49,7 @@ class AEDataModule(L.LightningDataModule):
             batch_size=self.batch_size,
             shuffle=True,
             num_workers=self.num_workers,
-            collate_fn=ae_batch_preparation,
+            collate_fn=ar_batch_preparation,
         )  # prefetch_factor=2
 
     def val_dataloader(self):
@@ -85,7 +85,7 @@ class AEDataModule(L.LightningDataModule):
 ####################################################################################################
 
 
-class AEDataset(CTCDataset):
+class ARDataset(CTCDataset):
     def __init__(
         self,
         ds_name: str,
@@ -95,7 +95,7 @@ class AEDataset(CTCDataset):
         self.ds_name = ds_name.lower()
         self.partition_type = partition_type
         self.use_voice_change_token = use_voice_change_token
-        self.setup(vocab_name="ae_w2i")
+        self.setup(vocab_name="ar_w2i")
 
     def __getitem__(self, idx):
         x = preprocess_audio(path=self.X[idx])
