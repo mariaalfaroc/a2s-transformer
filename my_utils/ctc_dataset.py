@@ -19,22 +19,18 @@ class CTCDataModule(LightningDataModule):
         use_voice_change_token: bool = False,
         batch_size: int = 16,
         num_workers: int = 20,
-        width_reduction: int = None,
+        width_reduction: int = 2,
     ):
-        super(CTCDataModule).__init__()
+        super(CTCDataModule, self).__init__()
         self.ds_name = ds_name
         self.use_voice_change_token = use_voice_change_token
         self.batch_size = batch_size
         self.num_workers = num_workers
-
-        # Must be overrided when the model is created
-        self.width_reduction = width_reduction
+        self.width_reduction = (
+            width_reduction  # Must be overrided with that of the model!
+        )
 
     def setup(self, stage: str):
-        assert (
-            self.width_reduction is not None
-        ), "width_reduction is None. Override the width_reduction attribute with that of the model."
-
         if stage == "fit":
             self.train_ds = CTCDataset(
                 ds_name=self.ds_name,
@@ -111,9 +107,9 @@ class CTCDataset(Dataset):
         self.partition_type = partition_type
         self.width_reduction = width_reduction
         self.use_voice_change_token = use_voice_change_token
-        self.setup(vocab_name="ctc_w2i")
+        self.init(vocab_name="ctc_w2i")
 
-    def setup(self, vocab_name: str = "w2i"):
+    def init(self, vocab_name: str = "w2i"):
         # Initialize krn parser
         self.krn_parser = krnParser()
 
@@ -149,7 +145,6 @@ class CTCDataset(Dataset):
         return len(self.X)
 
     def __getitem__(self, idx):
-        # CTC training setting
         x = preprocess_audio(path=self.X[idx])
         y = self.preprocess_transcript(path=self.Y[idx])
         if self.partition_type == "train":

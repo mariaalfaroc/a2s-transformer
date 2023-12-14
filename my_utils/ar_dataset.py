@@ -17,7 +17,7 @@ class ARDataModule(LightningDataModule):
         batch_size: int = 16,
         num_workers: int = 20,
     ):
-        super(ARDataModule).__init__()
+        super(ARDataModule, self).__init__()
         self.ds_name = ds_name
         self.use_voice_change_token = use_voice_change_token
         self.batch_size = batch_size
@@ -95,7 +95,7 @@ class ARDataset(CTCDataset):
         self.ds_name = ds_name.lower()
         self.partition_type = partition_type
         self.use_voice_change_token = use_voice_change_token
-        self.setup(vocab_name="ar_w2i")
+        self.init(vocab_name="ar_w2i")
 
     def __getitem__(self, idx):
         x = preprocess_audio(path=self.X[idx])
