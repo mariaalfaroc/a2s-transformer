@@ -109,7 +109,10 @@ class ConvBlock(nn.Module):
             stride=stride,
         )
         self.normLayer = nn.InstanceNorm2d(
-            num_features=out_c, eps=0.001, momentum=0.99, track_running_stats=False
+            num_features=out_c,
+            eps=0.001,
+            momentum=0.99,
+            track_running_stats=False,
         )
         self.dropout = MixDropout(dropout_prob=dropout, dropout_2d_prob=dropout / 2)
 
@@ -148,7 +151,10 @@ class DSCBlock(nn.Module):
             out_c, out_c, kernel_size=(3, 3), padding=(1, 1), stride=stride
         )
         self.norm_layer = nn.InstanceNorm2d(
-            out_c, eps=0.001, momentum=0.99, track_running_stats=False
+            out_c,
+            eps=0.001,
+            momentum=0.99,
+            track_running_stats=False,
         )
         self.dropout = MixDropout(dropout_prob=dropout, dropout_2d_prob=dropout / 2)
 
