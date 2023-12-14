@@ -2,9 +2,9 @@ import json
 import os
 
 import torch
-import lightning as L
 from torch.utils.data import Dataset
 from torch.utils.data import DataLoader
+from lightning.pytorch import LightningDataModule
 
 from my_utils.encoding_convertions import krnParser
 from my_utils.data_preprocessing import preprocess_audio, ctc_batch_preparation
@@ -12,7 +12,7 @@ from my_utils.data_preprocessing import preprocess_audio, ctc_batch_preparation
 DATASETS = ["Quartets", "Beethoven", "Mozart", "Haydn"]
 
 
-class CTCDataModule(L.LightningDataModule):
+class CTCDataModule(LightningDataModule):
     def __init__(
         self,
         ds_name: str,

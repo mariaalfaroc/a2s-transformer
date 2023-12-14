@@ -1,6 +1,6 @@
 import torch
-import lightning as L
 from torch.utils.data import DataLoader
+from lightning.pytorch import LightningDataModule
 
 from my_utils.ctc_dataset import CTCDataset
 from my_utils.data_preprocessing import preprocess_audio, ar_batch_preparation
@@ -9,7 +9,7 @@ SOS_TOKEN = "<SOS>"  # Start-of-sequence token
 EOS_TOKEN = "<EOS>"  # End-of-sequence token
 
 
-class ARDataModule(L.LightningDataModule):
+class ARDataModule(LightningDataModule):
     def __init__(
         self,
         ds_name: str,
