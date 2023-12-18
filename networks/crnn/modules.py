@@ -33,9 +33,8 @@ class CNN(nn.Module):
 class RNN(nn.Module):
     def __init__(self, input_size: int, output_size: int):
         super(RNN, self).__init__()
-        self.input_size = input_size
         self.blstm = nn.LSTM(
-            self.input_size,
+            input_size,
             256,
             num_layers=2,
             batch_first=True,
@@ -46,9 +45,6 @@ class RNN(nn.Module):
         self.linear = nn.Linear(256 * 2, output_size)
 
     def forward(self, x):
-        b, _, _, _ = x.size()
-        x = x.permute(0, 3, 2, 1).contiguous()
-        x = x.reshape(b, -1, self.input_size)
         x, _ = self.blstm(x)
         x = self.dropout(x)
         x = self.linear(x)
