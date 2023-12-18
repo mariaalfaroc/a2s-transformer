@@ -69,7 +69,7 @@ class CRNN(nn.Module):
 
     def get_num_frames_repeats(self, max_audio_len, max_seq_len):
         # Get maximum number of frames input to the RNN
-        max_num_frames = max_audio_len // self.cnn.backbone.width_reduction
+        max_num_frames = max_audio_len // self.cnn.width_reduction
         # Get frame multiplier factor to make sure that the
         # max_num_frames is equal or greater than the max_seq_len
         return math.ceil(max_num_frames / max_seq_len)
