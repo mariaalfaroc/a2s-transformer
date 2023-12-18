@@ -23,6 +23,7 @@ class CTCTrainedCRNN(LightningModule):
         self.model = CRNN(
             output_size=len(self.w2i) + 1, num_frame_repeats=num_frame_repeats
         )
+        self.width_reduction = self.model.cnn.width_reduction
         self.summary()
         # Loss: the target index cannot be blank!
         self.compute_ctc_loss = CTCLoss(blank=len(self.w2i), zero_infinity=False)
