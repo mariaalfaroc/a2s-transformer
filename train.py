@@ -44,7 +44,7 @@ def train(
             use_voice_change_token=use_voice_change_token,
             batch_size=batch_size,
         )
-        datamodule.setup(stage="train")
+        datamodule.setup(stage="fit")
         w2i, i2w = datamodule.get_w2i_and_i2w()
 
         # Model
@@ -64,7 +64,7 @@ def train(
             use_voice_change_token=use_voice_change_token,
             batch_size=batch_size,
         )
-        datamodule.setup(stage="train")
+        datamodule.setup(stage="fit")
         w2i, i2w = datamodule.get_w2i_and_i2w()
 
         # Model
