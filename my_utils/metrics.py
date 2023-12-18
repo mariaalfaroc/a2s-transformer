@@ -7,6 +7,8 @@ from pyMV2H.metrics.mv2h import mv2h
 from pyMV2H.utils.music import Music
 from pyMV2H.converter.midi_converter import MidiConverter as Converter
 
+from .encoding_convertions import VOICE_CHANGE_TOKEN, STEP_CHANGE_TOKEN
+
 
 def compute_metrics(y_true, y_pred):
     ################################# Sym-ER and Seq-ER:
@@ -107,10 +109,15 @@ def compute_mv2h_metrics(y_true, y_pred):
 
     ########################################### Monophonic evaluation:
 
-    def get_number_of_voices(in_file):
-        with open(in_file) as fin:
-            read_file = fin.readlines()
-        return len(read_file[0].split("\t"))
+    def get_number_of_voices(kern):
+        num_voices = 0
+        for token in kern:
+            if token == VOICE_CHANGE_TOKEN:
+                continue
+            num_voices += 1
+            if token == STEP_CHANGE_TOKEN:
+                break
+        return num_voices
 
     def divide_voice(in_file, out_file, it_voice):
         # Open file
@@ -174,14 +181,14 @@ def compute_mv2h_metrics(y_true, y_pred):
             # Iterating through the lines
             line = []
             for token in kern:
-                if token == "<b>":
+                if token == STEP_CHANGE_TOKEN:
                     if len(line) > 0:
                         if len(line) < num_voices:
                             line.extend(["."] * (num_voices - len(line)))
                         fout.write("\t".join(line) + "\n")
                     line = []
                 else:
-                    if token != "DOT":
+                    if token != "DOT" and token != VOICE_CHANGE_TOKEN:
                         line.append(token)
                     else:
                         line.append(".")
