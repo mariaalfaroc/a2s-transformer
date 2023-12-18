@@ -132,8 +132,13 @@ class krnParser:
     def convert(self, src_file: str) -> List[str]:
         out = self.cleanKernFile(src_file).T
 
-        out_line = self.step_change.join(
-            [self.voice_change.join(voice) for voice in out]
-        )
+        out_line = []
+        for t in out:
+            for v in t:
+                out_line.append(v)
+                out_line.append(self.voice_change)
+            del out_line[-1]
+            out_line.append(self.step_change)
+        del out_line[-1]
 
         return out_line
