@@ -21,9 +21,10 @@ class CTCTrainedCRNN(LightningModule):
         self.i2w = i2w
         self.ytest_i2w = ytest_i2w if ytest_i2w is not None else i2w
         # Model
-        num_frame_repeats = self.get_num_frames_repeats(max_audio_len, max_seq_len)
         self.model = CRNN(
-            output_size=len(self.w2i) + 1, num_frame_repeats=num_frame_repeats
+            output_size=len(self.w2i) + 1,
+            max_audio_len=max_audio_len,
+            max_seq_len=max_seq_len,
         )
         self.width_reduction = self.model.cnn.width_reduction
         self.summary(max_audio_len)
@@ -32,13 +33,6 @@ class CTCTrainedCRNN(LightningModule):
         # Predictions
         self.Y = []
         self.YHat = []
-
-    def get_num_frames_repeats(self, max_audio_len, max_seq_len):
-        # Get maximum number of frames input to the RNN
-        max_num_frames = max_audio_len // self.width_reduction
-        # Get frame multiplier factor to make sure that the
-        # max_num_frames is equal or greater than the max_seq_len
-        return math.ceil(max_num_frames / max_seq_len)
 
     def summary(self, max_audio_len):
         summary(self.model, input_size=[1, NUM_CHANNELS, IMG_HEIGHT, max_audio_len])
