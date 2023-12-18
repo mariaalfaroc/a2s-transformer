@@ -26,7 +26,7 @@ class CTCTrainedCRNN(LightningModule):
             output_size=len(self.w2i) + 1, num_frame_repeats=num_frame_repeats
         )
         self.width_reduction = self.model.cnn.width_reduction
-        self.summary()
+        self.summary(max_audio_len)
         # Loss: the target index cannot be blank!
         self.compute_ctc_loss = CTCLoss(blank=len(self.w2i), zero_infinity=False)
         # Predictions
@@ -40,8 +40,8 @@ class CTCTrainedCRNN(LightningModule):
         # max_num_frames is equal or greater than the max_seq_len
         return math.ceil(max_num_frames / max_seq_len)
 
-    def summary(self):
-        summary(self.model, input_size=[1, NUM_CHANNELS, IMG_HEIGHT, 256])
+    def summary(self, max_audio_len):
+        summary(self.model, input_size=[1, NUM_CHANNELS, IMG_HEIGHT, max_audio_len])
 
     def configure_optimizers(self):
         return torch.optim.Adam(self.model.parameters(), lr=1e-3, weight_decay=1e-6)
