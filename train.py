@@ -46,9 +46,12 @@ def train(
         w2i, i2w = datamodule.get_w2i_and_i2w()
 
         # Model
-        model = CTCTrainedCRNN(w2i=w2i, i2w=i2w, num_frame_repeats=16)
-        # TODO: num_frames do not harcode it
-
+        model = CTCTrainedCRNN(
+            w2i=w2i,
+            i2w=i2w,
+            max_audio_len=datamodule.get_max_audio_len(),
+            max_seq_len=datamodule.get_max_seq_len(),
+        )
         # Override the datamodule width reduction factors with that of the model
         datamodule.width_reduction = model.width_reduction
 

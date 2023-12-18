@@ -1,3 +1,4 @@
+import math
 import random
 
 import torch
@@ -11,7 +12,7 @@ from my_utils.data_preprocessing import IMG_HEIGHT, NUM_CHANNELS
 
 
 class CTCTrainedCRNN(LightningModule):
-    def __init__(self, w2i, i2w, ytest_i2w=None, num_frame_repeats=16):
+    def __init__(self, w2i, i2w, ytest_i2w=None, max_audio_len=100, max_seq_len=100):
         super(CTCTrainedCRNN, self).__init__()
         # Save hyperparameters
         self.save_hyperparameters()
@@ -20,6 +21,7 @@ class CTCTrainedCRNN(LightningModule):
         self.i2w = i2w
         self.ytest_i2w = ytest_i2w if ytest_i2w is not None else i2w
         # Model
+        num_frame_repeats = self.get_num_frames_repeats(max_audio_len, max_seq_len)
         self.model = CRNN(
             output_size=len(self.w2i) + 1, num_frame_repeats=num_frame_repeats
         )
@@ -30,6 +32,13 @@ class CTCTrainedCRNN(LightningModule):
         # Predictions
         self.Y = []
         self.YHat = []
+
+    def get_num_frames_repeats(self, max_audio_len, max_seq_len):
+        # Get maximum number of frames input to the RNN
+        max_num_frames = max_audio_len // self.width_reduction
+        # Get frame multiplier factor to make sure that the
+        # max_num_frames is equal or greater than the max_seq_len
+        return math.ceil(max_num_frames / max_seq_len)
 
     def summary(self):
         summary(self.model, input_size=[1, NUM_CHANNELS, IMG_HEIGHT, 256])
