@@ -68,7 +68,7 @@ class CRNN(nn.Module):
         max_num_frames = max_audio_len // self.cnn.width_reduction
         # Get frame multiplier factor to make sure that the
         # max_num_frames is equal or greater than the max_seq_len
-        return math.ceil(max_num_frames / max_seq_len)
+        return math.ceil(max_seq_len / max_num_frames)
 
     def forward(self, x):
         # CNN
