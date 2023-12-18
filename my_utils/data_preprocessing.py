@@ -44,7 +44,7 @@ def pad_batch_images(x):
     return x
 
 
-def pad_batch_transcripts(x, dtype="int32"):
+def pad_batch_transcripts(x, dtype=torch.int32):
     max_length = max(x, key=lambda sample: sample.shape[0]).shape[0]
     x = torch.stack([F.pad(i, pad=(0, max_length - i.shape[0])) for i in x], dim=0)
     x = x.type(dtype=dtype)
@@ -72,8 +72,8 @@ def ar_batch_preparation(batch):
     xl = torch.tensor(xl, dtype=torch.int32)
     # Decoder input: transcript[:-1]
     y_in = [i[:-1] for i in y]
-    y_in = pad_batch_transcripts(y_in, dtype="int64")
+    y_in = pad_batch_transcripts(y_in, dtype=torch.int64)
     # Decoder target: transcript[1:]
     y_out = [i[1:] for i in y]
-    y_out = pad_batch_transcripts(y_out, dtype="int64")
+    y_out = pad_batch_transcripts(y_out, dtype=torch.int64)
     return x, xl, y_in, y_out
