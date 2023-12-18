@@ -103,7 +103,9 @@ class ARDataset(CTCDataset):
     def __getitem__(self, idx):
         x = preprocess_audio(path=self.X[idx])
         y = self.preprocess_transcript(path=self.Y[idx])
-        return x, self.get_number_of_frames(x), y
+        if self.partition_type == "train":
+            return x, self.get_number_of_frames(x), y
+        return x, y
 
     def preprocess_transcript(self, path: str):
         y = self.krn_parser.convert(src_file=path)
