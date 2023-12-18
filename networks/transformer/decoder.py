@@ -96,6 +96,9 @@ class Decoder(nn.Module):
 
         # Get tgt masks
         tgt_mask, tgt_key_padding_mask = self.get_tgt_masks(tgt)
+        tgt_key_padding_mask = (
+            None if memory_key_padding_mask is None else tgt_key_padding_mask
+        )  # memory_key_padding_mask is None during inference
 
         # Transformer decoder
         tgt_pred = self.transformer_decoder(
@@ -116,10 +119,16 @@ class Decoder(nn.Module):
         return tgt_pred
 
     def get_memory_key_padding_mask(self, memory, memory_len):
+        if memory_len is None:
+            # During inference, the encoder output is not padded
+            # We perform inference one sample at a time
+            return None
+
         # When using batches, the spectrograms are padded to the same length
         # We need to mask the padding so the attention mechanism ignores it
 
         # memory.shape = [batch_size, src_sec_len, emb_dim]
+        # memory_len.shape = [batch_size]
         # memory_pad_mask.shape = [batch_size, src_sec_len]
         # Value 1 (True) means "ignored" and value 0 (False) means "not ignored"
         memory_pad_mask = torch.zeros(
