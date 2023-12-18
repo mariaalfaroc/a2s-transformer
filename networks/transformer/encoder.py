@@ -3,6 +3,9 @@ import random
 import torch.nn as nn
 import torch.nn.functional as F
 
+HEIGHT_REDUCTION = 16
+WIDTH_REDUCTION = 8
+
 
 class DepthSepConv2D(nn.Module):
     def __init__(

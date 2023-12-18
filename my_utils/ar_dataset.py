@@ -1,9 +1,12 @@
+import math
+
 import torch
 from torch.utils.data import DataLoader
 from lightning.pytorch import LightningDataModule
 
 from my_utils.ctc_dataset import CTCDataset
 from my_utils.data_preprocessing import preprocess_audio, ar_batch_preparation
+from networks.transformer.encoder import HEIGHT_REDUCTION, WIDTH_REDUCTION
 
 SOS_TOKEN = "<SOS>"  # Start-of-sequence token
 EOS_TOKEN = "<EOS>"  # End-of-sequence token
@@ -100,7 +103,7 @@ class ARDataset(CTCDataset):
     def __getitem__(self, idx):
         x = preprocess_audio(path=self.X[idx])
         y = self.preprocess_transcript(path=self.Y[idx])
-        return x, y
+        return x, self.get_number_of_frames(x), y
 
     def preprocess_transcript(self, path: str):
         y = self.krn_parser.convert(src_file=path)
@@ -124,3 +127,10 @@ class ARDataset(CTCDataset):
         i2w[0] = "<PAD>"
 
         return w2i, i2w
+
+    def get_number_of_frames(self, audio):
+        # audio is the output of preprocess_audio
+        # audio.shape = [1, freq_bins, time_frames]
+        return math.ceil(audio.shape[1] / HEIGHT_REDUCTION) * math.ceil(
+            audio.shape[2] / WIDTH_REDUCTION
+        )

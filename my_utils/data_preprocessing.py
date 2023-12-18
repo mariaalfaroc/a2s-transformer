@@ -66,13 +66,14 @@ def ctc_batch_preparation(batch):
 
 
 def ar_batch_preparation(batch):
-    x, y = zip(*batch)
+    x, xl, y = zip(*batch)
     # Zero-pad images to maximum batch image width
     x = pad_batch_images(x)
+    xl = torch.tensor(xl, dtype=torch.int32)
     # Decoder input: transcript[:-1]
     y_in = [i[:-1] for i in y]
     y_in = pad_batch_transcripts(y_in, dtype="int64")
     # Decoder target: transcript[1:]
     y_out = [i[1:] for i in y]
     y_out = pad_batch_transcripts(y_out, dtype="int64")
-    return x, y_in, y_out
+    return x, xl, y_in, y_out
