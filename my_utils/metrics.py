@@ -114,9 +114,9 @@ def compute_mv2h_metrics(y_true, y_pred):
         for token in kern:
             if token == VOICE_CHANGE_TOKEN:
                 continue
-            num_voices += 1
             if token == STEP_CHANGE_TOKEN:
                 break
+            num_voices += 1
         return num_voices
 
     def divide_voice(in_file, out_file, it_voice):
