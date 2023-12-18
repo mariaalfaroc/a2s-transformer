@@ -37,11 +37,10 @@ We consider the *Quartets* collection that comprises three datasets of string qu
 
 Furthermore, you'll need to meet certain requirements which are specified in the [`Dockerfile`](Dockerfile) to run the code. Alternatively, you can set up a virtual environment if preferred.
 
-# TODO: Ver como organizar los experimentos
-# Once you have prepared your environment (either a Docker container or a virtual environment), you are ready to begin. Execute the [`experiments/run.py`](experiments/run.py) script to replicate the experiments from our work:
-# ```python
-# python experiments/run.py
-# ```
+Once you have prepared your environment (either a Docker container or a virtual environment), you are ready to begin. Execute the [`run_exps.sh`](run_exps.sh) script to replicate the experiments from our work:
+```bash
+$ sh run_exps.sh
+```
 
 ## Citations
 
