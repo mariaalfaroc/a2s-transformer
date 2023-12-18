@@ -25,7 +25,7 @@
 
 End-to-end Audio-to-Score (A2S) transcription aims to derive a score that represents the music content of an audio recording in a single step. While current state-of-the-art methods, which rely on Convolutional Recurrent Neural Networks trained with the Connectionist Temporal Classification loss function, have shown promising results under constrained circumstances, these approaches still exhibit fundamental limitations, especially when dealing with complex sequence modeling tasks, such as polyphonic music. 
 
-To address the aforementioned conditions, **we introduces an alternative learning scheme based on a Transformer decoder, specifically tailored for A2S by incorporating a two-dimensional positional encoding to preserve frequency-time relationships when processing the audio signal**.
+To address the aforementioned conditions, **we introduce an alternative learning scheme based on a Transformer decoder, specifically tailored for A2S by incorporating a two-dimensional positional encoding to preserve frequency-time relationships when processing the audio signal**.
 
 <p align="center">
   <img src="scheme.jpeg" alt="content" style="border: 1px solid black; width: 800px;">
