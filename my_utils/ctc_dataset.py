@@ -9,7 +9,7 @@ from lightning.pytorch import LightningDataModule
 from my_utils.encoding_convertions import krnParser
 from my_utils.data_preprocessing import preprocess_audio, ctc_batch_preparation
 
-DATASETS = ["Quartets", "Beethoven", "Mozart", "Haydn"]
+DATASETS = ["quartets", "beethoven", "mozart", "haydn"]
 
 
 class CTCDataModule(LightningDataModule):
