@@ -18,6 +18,7 @@ seed_everything(42, benchmark=False)
 def train(
     ds_name,
     model_type: str = "crnn",
+    attn_window: int = -1,
     use_voice_change_token: bool = False,
     epochs: int = 1000,
     patience: int = 20,
@@ -30,6 +31,7 @@ def train(
     print("TRAIN EXPERIMENT")
     print(f"\tDataset: {ds_name}")
     print(f"\tModel type: {model_type}")
+    print(f"\tAttention window: {attn_window} (Used if model type is transformer)")
     print(f"\tUse voice change token: {use_voice_change_token}")
     print(f"\tEpochs: {epochs}")
     print(f"\tPatience: {patience}")
@@ -66,8 +68,14 @@ def train(
         w2i, i2w = datamodule.get_w2i_and_i2w()
 
         # Model
-        # TODO: Not finished yet!
-        model = A2STransformer(w2i=w2i, i2w=i2w)
+        model = A2STransformer(
+            max_seq_len=datamodule.get_max_seq_len(),
+            max_audio_len=datamodule.get_max_audio_len(),
+            w2i=w2i,
+            i2w=i2w,
+            attn_window=attn_window,
+            teacher_forcing_prob=0.2,
+        )
 
     else:
         print(f"Model type {model_type} not implemented")

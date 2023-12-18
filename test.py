@@ -68,7 +68,6 @@ def test(
         ytest_i2w = datamodule.test_ds.i2w
 
         # Model
-        # TODO: Not finished yet!
         model = A2STransformer.load_from_checkpoint(
             checkpoint_path, ytest_i2w=ytest_i2w
         )
