@@ -216,7 +216,7 @@ def compute_mv2h_metrics(y_true, y_pred):
         if flag_polyphonic_kern:
             res_dict = eval_as_polyphonic()
         else:
-            res_dict = eval_as_monophonic()
+            res_dict = eval_as_monophonic(num_voices)
 
         # Updating global results
         MV2H_global.__multi_pitch__ += res_dict.multi_pitch
