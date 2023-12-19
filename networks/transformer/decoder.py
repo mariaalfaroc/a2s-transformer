@@ -134,7 +134,8 @@ class Decoder(nn.Module):
             memory_pad_mask[i, l:] = True
         return memory_pad_mask
 
-    def create_variable_window_mask(
+    @staticmethod
+    def create_variable_window_mask( 
         size, window_size, dtype=torch.float32, device=torch.device("cpu")
     ):
         """
