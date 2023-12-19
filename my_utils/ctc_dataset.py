@@ -158,7 +158,7 @@ class CTCDataset(Dataset):
             # x.shape = [channels, height, width]
             return (
                 x,
-                (x.shape[2] // self.width_reduction) * self.frame_multiplier_factor,
+                x.shape[2] * self.frame_multiplier_factor,
                 y,
                 len(y),
             )
@@ -254,6 +254,7 @@ class CTCDataset(Dataset):
                         src_file=f"Quartets/krn/{s}.krn"
                     )
                     max_frame_multiplier_factor = max(
-                        max_frame_multiplier_factor, len(transcript) / audio.shape[2]
+                        max_frame_multiplier_factor,
+                        math.ceil(len(transcript) / audio.shape[2]),
                     )
-        self.frame_multiplier_factor = math.ceil(max_frame_multiplier_factor)
+        self.frame_multiplier_factor = max_frame_multiplier_factor
