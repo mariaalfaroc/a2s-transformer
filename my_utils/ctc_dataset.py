@@ -156,7 +156,12 @@ class CTCDataset(Dataset):
         y = self.preprocess_transcript(path=self.Y[idx])
         if self.partition_type == "train":
             # x.shape = [channels, height, width]
-            return x, x.shape[2] // self.width_reduction, y, len(y)
+            return (
+                x,
+                (x.shape[2] // self.width_reduction) * self.frame_multiplier_factor,
+                y,
+                len(y),
+            )
         return x, y
 
     def preprocess_transcript(self, path: str):
