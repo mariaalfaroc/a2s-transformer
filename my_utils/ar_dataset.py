@@ -99,6 +99,7 @@ class ARDataset(CTCDataset):
         self.partition_type = partition_type
         self.use_voice_change_token = use_voice_change_token
         self.init(vocab_name="ar_w2i")
+        self.max_seq_len += 1  # Add 1 for EOS_TOKEN
 
     def __getitem__(self, idx):
         x = preprocess_audio(path=self.X[idx])
