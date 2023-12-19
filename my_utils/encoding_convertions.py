@@ -6,10 +6,11 @@ import numpy as np
 VOICE_CHANGE_TOKEN = "<COC>"
 STEP_CHANGE_TOKEN = "<COR>"
 
+
 class krnParser:
     """Main Kern parser operations class."""
 
-    def __init__(self) -> None:
+    def __init__(self, use_voice_change_token: bool = True) -> None:
         self.reserved_words = ["clef", "k[", "*M"]
         self.reserved_dot = "."
         self.reserved_dot_EncodedCharacter = "DOT"
@@ -17,6 +18,7 @@ class krnParser:
         self.comment_symbols = ["*", "!"]
         self.voice_change = VOICE_CHANGE_TOKEN  # change-of-column (coc) token
         self.step_change = STEP_CHANGE_TOKEN  # change-of-row (cor) token
+        self.use_voice_change_token = use_voice_change_token
 
     # ---------------------------------------------------------------------------- AUXILIARY FUNCTIONS
 
@@ -138,8 +140,10 @@ class krnParser:
         for t in out:
             for v in t:
                 out_line.append(v)
-                out_line.append(self.voice_change)
-            del out_line[-1]
+                if self.use_voice_change_token:
+                    out_line.append(self.voice_change)
+            if self.use_voice_change_token:
+                del out_line[-1]
             out_line.append(self.step_change)
         del out_line[-1]
 

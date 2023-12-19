@@ -110,8 +110,6 @@ class ARDataset(CTCDataset):
     def preprocess_transcript(self, path: str):
         y = self.krn_parser.convert(src_file=path)
         y = [SOS_TOKEN] + y + [EOS_TOKEN]
-        if not self.use_voice_change_token:
-            y = [w for w in y if w != self.krn_parser.voice_change]
         y = [self.w2i[w] for w in y]
         return torch.tensor(y, dtype=torch.int64)
 

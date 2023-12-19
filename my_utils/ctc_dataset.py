@@ -115,7 +115,7 @@ class CTCDataset(Dataset):
 
     def init(self, vocab_name: str = "w2i"):
         # Initialize krn parser
-        self.krn_parser = krnParser()
+        self.krn_parser = krnParser(use_voice_change_token=self.use_voice_change_token)
 
         # Check dataset name
         assert self.ds_name in DATASETS, f"Invalid dataset name: {self.ds_name}"
@@ -161,8 +161,6 @@ class CTCDataset(Dataset):
 
     def preprocess_transcript(self, path: str):
         y = self.krn_parser.convert(src_file=path)
-        if not self.use_voice_change_token:
-            y = [w for w in y if w != self.krn_parser.voice_change]
         y = [self.w2i[w] for w in y]
         return torch.tensor(y, dtype=torch.int32)
 
@@ -207,8 +205,6 @@ class CTCDataset(Dataset):
                     max_seq_len = max(max_seq_len, len(transcript))
                     vocab.extend(transcript)
         vocab = sorted(set(vocab))
-        if not self.use_voice_change_token:
-            del vocab[vocab.index(self.krn_parser.voice_change)]
         return vocab, max_seq_len
 
     def make_vocabulary(self):
