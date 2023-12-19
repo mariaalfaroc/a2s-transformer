@@ -158,7 +158,7 @@ class CTCDataset(Dataset):
             # x.shape = [channels, height, width]
             return (
                 x,
-                x.shape[2] * self.frame_multiplier_factor,
+                (x.shape[2] // self.width_reduction) * self.width_reduction * self.frame_multiplier_factor,
                 y,
                 len(y),
             )
