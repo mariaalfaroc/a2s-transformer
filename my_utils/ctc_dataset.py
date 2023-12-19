@@ -1,5 +1,6 @@
-import json
 import os
+import json
+import math
 
 import torch
 from torch.utils.data import Dataset
@@ -90,6 +91,9 @@ class CTCDataModule(LightningDataModule):
 
     def get_max_audio_len(self):
         return self.train_ds.max_audio_len
+
+    def get_frame_multiplier_factor(self):
+        return self.train_ds.frame_multiplier_factor
 
 
 ####################################################################################################
@@ -230,3 +234,22 @@ class CTCDataset(Dataset):
                     audio = preprocess_audio(path=f"Quartets/flac/{s}.flac")
                     max_audio_len = max(max_audio_len, audio.shape[2])
         self.max_audio_len = max_audio_len
+
+    def set_frame_multiplier_factor(self):
+        # Get the frame multiplier factor so that
+        # the frames input to the RNN are equal to the
+        # length of the transcript, ensuring the CTC condition
+        max_frame_multiplier_factor = 0
+        for partition_type in ["train", "val", "test"]:
+            partition_file = f"Quartets/partitions/{self.ds_name}/{partition_type}.txt"
+            with open(partition_file, "r") as file:
+                for s in file.read().splitlines():
+                    s = s.strip()
+                    audio = preprocess_audio(path=f"Quartets/flac/{s}.flac")
+                    transcript = self.krn_parser.convert(
+                        src_file=f"Quartets/krn/{s}.krn"
+                    )
+                    max_frame_multiplier_factor = max(
+                        max_frame_multiplier_factor, len(transcript) / audio.shape[2]
+                    )
+        self.frame_multiplier_factor = math.ceil(max_frame_multiplier_factor)

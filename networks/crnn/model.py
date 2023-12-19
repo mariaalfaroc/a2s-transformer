@@ -12,7 +12,9 @@ from my_utils.data_preprocessing import IMG_HEIGHT, NUM_CHANNELS
 
 
 class CTCTrainedCRNN(LightningModule):
-    def __init__(self, w2i, i2w, ytest_i2w=None, max_audio_len=100, max_seq_len=100):
+    def __init__(
+        self, w2i, i2w, ytest_i2w=None, max_audio_len=100, frame_multiplier_factor=8
+    ):
         super(CTCTrainedCRNN, self).__init__()
         # Save hyperparameters
         self.save_hyperparameters()
@@ -23,8 +25,7 @@ class CTCTrainedCRNN(LightningModule):
         # Model
         self.model = CRNN(
             output_size=len(self.w2i) + 1,
-            max_audio_len=max_audio_len,
-            max_seq_len=max_seq_len,
+            frame_multiplier_factor=frame_multiplier_factor,
         )
         self.width_reduction = self.model.cnn.width_reduction
         self.summary(max_audio_len)

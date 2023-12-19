@@ -52,7 +52,7 @@ def train(
             w2i=w2i,
             i2w=i2w,
             max_audio_len=datamodule.get_max_audio_len(),
-            max_seq_len=datamodule.get_max_seq_len(),
+            frame_multiplier_factor=datamodule.get_frame_multiplier_factor(),
         )
         # Override the datamodule width reduction factors with that of the model
         datamodule.width_reduction = model.width_reduction

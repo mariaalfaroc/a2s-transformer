@@ -52,23 +52,16 @@ class RNN(nn.Module):
 
 
 class CRNN(nn.Module):
-    def __init__(self, output_size: int, max_audio_len: int, max_seq_len: int):
+    def __init__(self, output_size: int, frame_multiplier_factor: int):
         super(CRNN, self).__init__()
         # CNN
         self.cnn = CNN()
         # RNN
-        self.num_frame_repeats = self.get_num_frames_repeats(max_audio_len, max_seq_len)
+        self.num_frame_repeats = self.cnn.width_reduction * frame_multiplier_factor
         self.rnn_input_size = self.cnn.out_channels * (
             IMG_HEIGHT // self.cnn.height_reduction
         )
         self.rnn = RNN(input_size=self.rnn_input_size, output_size=output_size)
-
-    def get_num_frames_repeats(self, max_audio_len, max_seq_len):
-        # Get maximum number of frames input to the RNN
-        max_num_frames = max_audio_len // self.cnn.width_reduction
-        # Get frame multiplier factor to make sure that the
-        # max_num_frames is equal or greater than the max_seq_len
-        return math.ceil(max_seq_len / max_num_frames)
 
     def forward(self, x):
         # CNN
