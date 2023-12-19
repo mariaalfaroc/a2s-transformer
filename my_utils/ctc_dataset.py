@@ -145,6 +145,9 @@ class CTCDataset(Dataset):
         # Set max_audio_len
         self.set_max_audio_len()
 
+        # Set frame_multiplier_factor
+        self.set_frame_multiplier_factor()
+
     def __len__(self):
         return len(self.X)
 
