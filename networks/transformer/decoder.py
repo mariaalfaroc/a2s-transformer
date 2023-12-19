@@ -81,10 +81,6 @@ class Decoder(nn.Module):
         # tgt is the target sequence shifted to the right
         # tgt.shape = [batch_size, tgt_sec_len]
 
-        # Limit the number of past tokens the decoder can see
-        if self.attn_window > 0:
-            tgt = tgt[:, -self.attn_window :]
-
         # Embedding + 1D PE
         tgt_emb = self.pos_1d(
             self.embedding(tgt)
@@ -138,17 +134,48 @@ class Decoder(nn.Module):
             memory_pad_mask[i, l:] = True
         return memory_pad_mask
 
+    def create_variable_window_mask(
+        size, window_size, dtype=torch.float32, device=torch.device("cpu")
+    ):
+        """
+        Creates a mask for the target sequence with a variable window size.
+
+        Args:
+        size (int): The size of the target sequence.
+        window_size (int): The size of the window to focus on the last X tokens.
+
+        Returns:
+        torch.Tensor: The generated mask.
+        """
+        mask = torch.full((size, size), float("-inf"), dtype=dtype, device=device)
+        for i in range(size):
+            if window_size < size:
+                start = max(0, i - window_size)
+                mask[i, start : i + 1] = 0
+            else:
+                mask[i, : i + 1] = 0
+        return mask
+
     def get_tgt_masks(self, tgt):
         # tgt.shape = [batch_size, tgt_sec_len]
         tgt_sec_len = tgt.shape[1]
+
         # Target = Decoder (we only let it see the past)
         # Upper triangular matrix of size (tgt_sec_len, tgt_sec_len)
         # The masked positions are filled with float('-inf')
         # Unmasked positions are filled with float(0.0)
-        # tgt_mask.shape = [tgt_sec_len, tgt_sec_len]
-        tgt_mask = nn.Transformer.generate_square_subsequent_mask(
-            tgt_sec_len, tgt.device
-        )
+
+        # ATTENTION WINDOW MECHANISM
+        # We limit the number of past tokens the decoder can see
+        if self.attn_window > 0:
+            tgt_mask = self.create_variable_window_mask(
+                tgt_sec_len, self.attn_window, device=tgt.device
+            )
+        else:
+            tgt_mask = nn.Transformer.generate_square_subsequent_mask(
+                tgt_sec_len, tgt.device
+            )
+
         # 0 == "<PAD>"
         # Pad token to be ignored by the attention mechanism
         # Value 1 (True) means "ignored" and value 0 (False) means "not ignored"

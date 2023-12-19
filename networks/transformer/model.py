@@ -99,7 +99,11 @@ class A2STransformer(LightningModule):
             256,
         ]
         memory_len_size = [1]
-        summary(self.decoder, input_size=[tgt_size, memory_size, memory_len_size], dtypes=[torch.int64, torch.float32, torch.int64])
+        summary(
+            self.decoder,
+            input_size=[tgt_size, memory_size, memory_len_size],
+            dtypes=[torch.int64, torch.float32, torch.int64],
+        )
 
     def configure_optimizers(self):
         return torch.optim.Adam(
