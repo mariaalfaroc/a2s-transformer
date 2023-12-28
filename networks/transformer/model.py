@@ -74,7 +74,7 @@ class A2STransformer(LightningModule):
             max_width=math.ceil(max_audio_len / WIDTH_REDUCTION),
         )
         self.decoder = Decoder(
-            output_size=len(self.ytest_i2w),
+            output_size=len(self.w2i),
             max_seq_len=max_seq_len,
             num_embeddings=len(self.w2i),
             padding_idx=self.padding_idx,
