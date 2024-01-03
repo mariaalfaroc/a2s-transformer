@@ -84,16 +84,28 @@ class CTCDataModule(LightningDataModule):
         return self.test_dataloader(self)
 
     def get_w2i_and_i2w(self):
-        return self.train_ds.w2i, self.train_ds.i2w
+        try:
+            return self.train_ds.w2i, self.train_ds.i2w
+        except AttributeError:
+            return self.test_ds.w2i, self.test_ds.i2w
 
     def get_max_seq_len(self):
-        return self.train_ds.max_seq_len
+        try:
+            return self.train_ds.max_seq_len
+        except AttributeError:
+            return self.test_ds.max_seq_len
 
     def get_max_audio_len(self):
-        return self.train_ds.max_audio_len
+        try:
+            return self.train_ds.max_audio_len
+        except AttributeError:
+            return self.test_ds.max_audio_len
 
     def get_frame_multiplier_factor(self):
-        return self.train_ds.frame_multiplier_factor
+        try:
+            return self.train_ds.frame_multiplier_factor
+        except AttributeError:
+            return self.test_ds.frame_multiplier_factor
 
 
 ####################################################################################################
@@ -139,14 +151,8 @@ class CTCDataset(Dataset):
         self.w2i_path = os.path.join(vocab_folder, vocab_name)
         self.w2i, self.i2w = self.check_and_retrieve_vocabulary()
 
-        # Set max_seq_len
-        self.set_max_seq_len()
-
-        # Set max_audio_len
-        self.set_max_audio_len()
-
-        # Set frame_multiplier_factor
-        self.set_frame_multiplier_factor()
+        # Set max_seq_len, max_audio_len and frame_multiplier_factor
+        self.set_max_lens()
 
     def __len__(self):
         return len(self.X)
@@ -196,8 +202,7 @@ class CTCDataset(Dataset):
 
         return w2i, i2w
 
-    def get_unique_tokens_and_max_seq_len(self):
-        max_seq_len = 0
+    def make_vocabulary(self):
         vocab = []
         for partition_type in ["train", "val", "test"]:
             partition_file = f"Quartets/partitions/{self.ds_name}/{partition_type}.txt"
@@ -207,13 +212,8 @@ class CTCDataset(Dataset):
                     transcript = self.krn_parser.convert(
                         src_file=f"Quartets/krn/{s}.krn"
                     )
-                    max_seq_len = max(max_seq_len, len(transcript))
                     vocab.extend(transcript)
         vocab = sorted(set(vocab))
-        return vocab, max_seq_len
-
-    def make_vocabulary(self):
-        vocab = self.get_unique_tokens_and_max_seq_len()[0]
 
         w2i = {}
         i2w = {}
@@ -225,36 +225,34 @@ class CTCDataset(Dataset):
 
         return w2i, i2w
 
-    def set_max_seq_len(self):
-        self.max_seq_len = self.get_unique_tokens_and_max_seq_len()[1]
-
-    def set_max_audio_len(self):
-        max_audio_len = 0
-        for partition_type in ["train", "val", "test"]:
-            partition_file = f"Quartets/partitions/{self.ds_name}/{partition_type}.txt"
-            with open(partition_file, "r") as file:
-                for s in file.read().splitlines():
-                    s = s.strip()
-                    audio = preprocess_audio(path=f"Quartets/flac/{s}.flac")
-                    max_audio_len = max(max_audio_len, audio.shape[2])
-        self.max_audio_len = max_audio_len
-
-    def set_frame_multiplier_factor(self):
-        # Get the frame multiplier factor so that
+    def set_max_lens(self):
+        # Set the maximum lengths for the whole QUARTETS collection:
+        # 1) Get the maximum transcript length
+        # 2) Get the maximum audio length
+        # 3) Get the frame multiplier factor so that
         # the frames input to the RNN are equal to the
         # length of the transcript, ensuring the CTC condition
+        max_seq_len = 0
+        max_audio_len = 0
         max_frame_multiplier_factor = 0
-        for partition_type in ["train", "val", "test"]:
-            partition_file = f"Quartets/partitions/{self.ds_name}/{partition_type}.txt"
-            with open(partition_file, "r") as file:
-                for s in file.read().splitlines():
-                    s = s.strip()
-                    audio = preprocess_audio(path=f"Quartets/flac/{s}.flac")
-                    transcript = self.krn_parser.convert(
-                        src_file=f"Quartets/krn/{s}.krn"
-                    )
-                    max_frame_multiplier_factor = max(
-                        max_frame_multiplier_factor,
-                        math.ceil(len(transcript) / audio.shape[2]),
-                    )
+        for t in os.listdir("Quartets/krn"):
+            if t.endswith(".krn") and not t.startswith("."):
+                # Max transcript length
+                transcript = self.krn_parser.convert(
+                    src_file=os.path.join("Quartets/krn", t)
+                )
+                max_seq_len = max(max_seq_len, len(transcript))
+                # Max audio length
+                audio = preprocess_audio(
+                    path=os.path.join("Quartets/flac", t[:-4] + ".flac")
+                )
+                max_audio_len = max(max_audio_len, audio.shape[2])
+                # Max frame multiplier factor
+                max_frame_multiplier_factor = max(
+                    max_frame_multiplier_factor,
+                    math.ceil(len(transcript) / audio.shape[2]),
+                )
+
+        self.max_seq_len = max_seq_len
+        self.max_audio_len = max_audio_len
         self.frame_multiplier_factor = max_frame_multiplier_factor

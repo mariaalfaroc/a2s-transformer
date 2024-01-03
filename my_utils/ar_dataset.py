@@ -76,13 +76,22 @@ class ARDataModule(LightningDataModule):
         return self.test_dataloader(self)
 
     def get_w2i_and_i2w(self):
-        return self.train_ds.w2i, self.train_ds.i2w
+        try:
+            return self.train_ds.w2i, self.train_ds.i2w
+        except AttributeError:
+            return self.test_ds.w2i, self.test_ds.i2w
 
     def get_max_seq_len(self):
-        return self.train_ds.max_seq_len
+        try:
+            return self.train_ds.max_seq_len
+        except AttributeError:
+            return self.test_ds.max_seq_len
 
     def get_max_audio_len(self):
-        return self.train_ds.max_audio_len
+        try:
+            return self.train_ds.max_audio_len
+        except AttributeError:
+            return self.test_ds.max_audio_len
 
 
 ####################################################################################################
