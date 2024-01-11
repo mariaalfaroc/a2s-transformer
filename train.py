@@ -95,12 +95,12 @@ def train(
             save_weights_only=False,
             mode="min",
             auto_insert_metric_name=False,
-            every_n_epochs=1,
+            every_n_epochs=5,
             save_on_train_epoch_end=False,
         ),
         EarlyStopping(
             monitor="val_sym-er",
-            min_delta=0.1,
+            min_delta=0.01,
             patience=patience,
             verbose=True,
             mode="min",
@@ -121,7 +121,7 @@ def train(
         ),
         callbacks=callbacks,
         max_epochs=epochs,
-        check_val_every_n_epoch=1,
+        check_val_every_n_epoch=5,
         deterministic=False,  # If True, raises error saying that CTC loss does not have this behaviour
         benchmark=False,
         precision="16-mixed",  # Mixed precision training
