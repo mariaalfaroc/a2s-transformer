@@ -250,7 +250,7 @@ class CTCDataset(Dataset):
                 # Max frame multiplier factor
                 max_frame_multiplier_factor = max(
                     max_frame_multiplier_factor,
-                    math.ceil(len(transcript) / audio.shape[2]),
+                    math.ceil(((2 * len(transcript)) + 1) / audio.shape[2]),
                 )
 
         self.max_seq_len = max_seq_len
