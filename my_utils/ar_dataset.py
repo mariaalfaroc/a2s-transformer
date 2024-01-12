@@ -124,7 +124,16 @@ class ARDataset(CTCDataset):
         return torch.tensor(y, dtype=torch.int64)
 
     def make_vocabulary(self):
-        vocab = self.get_unique_tokens_and_max_seq_len()[0]
+        vocab = []
+        for partition_type in ["train", "val", "test"]:
+            partition_file = f"Quartets/partitions/{self.ds_name}/{partition_type}.txt"
+            with open(partition_file, "r") as file:
+                for s in file.read().splitlines():
+                    s = s.strip()
+                    transcript = self.krn_parser.convert(
+                        src_file=f"Quartets/krn/{s}.krn"
+                    )
+                    vocab.extend(transcript)
         vocab = [SOS_TOKEN, EOS_TOKEN] + vocab
         vocab = sorted(vocab)
 
