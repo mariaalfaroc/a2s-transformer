@@ -135,7 +135,7 @@ class ARDataset(CTCDataset):
                     )
                     vocab.extend(transcript)
         vocab = [SOS_TOKEN, EOS_TOKEN] + vocab
-        vocab = sorted(vocab)
+        vocab = sorted(set(vocab))
 
         w2i = {}
         i2w = {}
