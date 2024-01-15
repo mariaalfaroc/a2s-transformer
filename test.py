@@ -4,7 +4,6 @@ import os
 import fire
 import torch
 from lightning.pytorch import Trainer
-from lightning.pytorch.callbacks import EarlyStopping, ModelCheckpoint
 from lightning.pytorch.loggers.wandb import WandbLogger
 
 from networks.crnn.model import CTCTrainedCRNN
