@@ -1,5 +1,5 @@
 <p align='center'>
-  <a href=''><img src='https://i.imgur.com/Iu7CvC1.png' alt='PRAIG-logo' width='100'></a>
+  <a href='https://praig.ua.es/'><img src='https://i.imgur.com/Iu7CvC1.png' alt='PRAIG-logo' width='100'></a>
 </p>
 
 <h1 align='center'>A Transformer Approach For Polyphonic Audio-To-Score Transcription</h1>
