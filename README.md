@@ -4,7 +4,7 @@
 
 <h1 align='center'>A Transformer Approach For Polyphonic Audio-To-Score Transcription</h1>
 
-<h4 align='center'>Full text coming soon<a href='' target='_blank'></a>.</h4>
+<h4 align='center'>Full text available <a href='https://ieeexplore.ieee.org/document/10447162' target='_blank'>here</a>.</h4>
 
 <p align='center'>
   <img src='https://img.shields.io/badge/python-3.9.0-orange' alt='Python'>
