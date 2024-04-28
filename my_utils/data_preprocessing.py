@@ -11,6 +11,11 @@ NUM_CHANNELS = 1
 IMG_HEIGHT = NUM_FREQ_BINS = 195
 
 
+def set_pad_index(index: int):
+    global PAD_INDEX
+    PAD_INDEX = index
+
+
 def get_spectrogram_from_file(path: str) -> np.ndarray:
     y, fs = librosa.load(path, sr=22050)
     stft_fmax = 2093
@@ -46,7 +51,9 @@ def pad_batch_images(x):
 
 def pad_batch_transcripts(x, dtype=torch.int32):
     max_length = max(x, key=lambda sample: sample.shape[0]).shape[0]
-    x = torch.stack([F.pad(i, pad=(0, max_length - i.shape[0])) for i in x], dim=0)
+    x = torch.stack(
+        [F.pad(i, pad=(0, max_length - i.shape[0]), value=PAD_INDEX) for i in x], dim=0
+    )
     x = x.type(dtype=dtype)
     return x
 

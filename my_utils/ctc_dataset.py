@@ -8,7 +8,11 @@ from torch.utils.data import DataLoader
 from lightning.pytorch import LightningDataModule
 
 from my_utils.encoding_convertions import krnParser
-from my_utils.data_preprocessing import preprocess_audio, ctc_batch_preparation
+from my_utils.data_preprocessing import (
+    preprocess_audio,
+    ctc_batch_preparation,
+    set_pad_index,
+)
 
 DATASETS = ["quartets", "beethoven", "mozart", "haydn"]
 
@@ -150,6 +154,8 @@ class CTCDataset(Dataset):
         vocab_name += ".json"
         self.w2i_path = os.path.join(vocab_folder, vocab_name)
         self.w2i, self.i2w = self.check_and_retrieve_vocabulary()
+        # Modify the global PAD_INDEX to match w2i["<PAD>"]
+        set_pad_index(self.w2i["<PAD>"])
 
         # Set max_seq_len, max_audio_len and frame_multiplier_factor
         self.set_max_lens()
@@ -164,7 +170,9 @@ class CTCDataset(Dataset):
             # x.shape = [channels, height, width]
             return (
                 x,
-                (x.shape[2] // self.width_reduction) * self.width_reduction * self.frame_multiplier_factor,
+                (x.shape[2] // self.width_reduction)
+                * self.width_reduction
+                * self.frame_multiplier_factor,
                 y,
                 len(y),
             )
