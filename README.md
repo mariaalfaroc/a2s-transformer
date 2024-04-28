@@ -39,7 +39,7 @@ Furthermore, you'll need to meet certain requirements which are specified in the
 
 Once you have prepared your environment (either a Docker container or a virtual environment), you are ready to begin. Execute the [`run_exps.sh`](run_exps.sh) script to replicate the experiments from our work:
 ```bash
-$ sh run_exps.sh
+bash run_exps.sh
 ```
 
 ## Citations
