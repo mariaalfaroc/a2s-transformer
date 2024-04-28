@@ -22,15 +22,18 @@ class CTCTrainedCRNN(LightningModule):
         self.w2i = w2i
         self.i2w = i2w
         self.ytest_i2w = ytest_i2w if ytest_i2w is not None else i2w
-        # Model
+        # Model (we use the same token for padding and CTC-blank; w2i contains the token "<PAD>")
         self.model = CRNN(
-            output_size=len(self.w2i) + 1,
+            output_size=len(self.w2i),
             frame_multiplier_factor=frame_multiplier_factor,
         )
         self.width_reduction = self.model.cnn.width_reduction
         self.summary(max_audio_len)
-        # Loss: the target index cannot be blank!
-        self.compute_ctc_loss = CTCLoss(blank=len(self.w2i), zero_infinity=False)
+        # CTC Loss (we use the same token for padding and CTC-blank)
+        self.blank_padding_token = w2i["<PAD>"]
+        self.compute_ctc_loss = CTCLoss(
+            blank=self.blank_padding_token, zero_infinity=False
+        )
         # Predictions
         self.Y = []
         self.YHat = []
@@ -62,8 +65,10 @@ class CTCTrainedCRNN(LightningModule):
         y_pred_decoded = torch.argmax(y_pred, dim=1)
         # Merge repeated elements
         y_pred_decoded = torch.unique_consecutive(y_pred_decoded, dim=0).tolist()
-        # Convert to string; len(i2w) -> CTC-blank
-        y_pred_decoded = [i2w[i] for i in y_pred_decoded if i != len(i2w)]
+        # Convert to string (remove CTC-blank token)
+        y_pred_decoded = [
+            i2w[i] for i in y_pred_decoded if i != self.blank_padding_token
+        ]
         return y_pred_decoded
 
     def validation_step(self, batch, batch_idx):
