@@ -31,32 +31,39 @@ class CTCDataModule(LightningDataModule):
         self.use_voice_change_token = use_voice_change_token
         self.batch_size = batch_size
         self.num_workers = num_workers
-        self.width_reduction = (
-            width_reduction  # Must be overrided with that of the model!
-        )
+        self.width_reduction = width_reduction  # Must be overrided with that of the model!
+        
+        # Datasets
+        # To prevent executing setup() twice
+        self.train_ds = None
+        self.val_ds = None
+        self.test_ds = None
 
     def setup(self, stage: str):
         if stage == "fit":
-            self.train_ds = CTCDataset(
-                ds_name=self.ds_name,
-                partition_type="train",
-                width_reduction=self.width_reduction,
-                use_voice_change_token=self.use_voice_change_token,
-            )
-            self.val_ds = CTCDataset(
-                ds_name=self.ds_name,
-                partition_type="val",
-                width_reduction=self.width_reduction,
-                use_voice_change_token=self.use_voice_change_token,
-            )
+            if not self.train_ds:
+                self.train_ds = CTCDataset(
+                    ds_name=self.ds_name,
+                    partition_type="train",
+                    width_reduction=self.width_reduction,
+                    use_voice_change_token=self.use_voice_change_token,
+                )
+            if not self.val_ds:
+                self.val_ds = CTCDataset(
+                    ds_name=self.ds_name,
+                    partition_type="val",
+                    width_reduction=self.width_reduction,
+                    use_voice_change_token=self.use_voice_change_token,
+                )
 
         if stage == "test" or stage == "predict":
-            self.test_ds = CTCDataset(
-                ds_name=self.ds_name,
-                partition_type="test",
-                width_reduction=self.width_reduction,
-                use_voice_change_token=self.use_voice_change_token,
-            )
+            if not self.test_ds:
+                self.test_ds = CTCDataset(
+                    ds_name=self.ds_name,
+                    partition_type="test",
+                    width_reduction=self.width_reduction,
+                    use_voice_change_token=self.use_voice_change_token,
+                )
 
     def train_dataloader(self):
         return DataLoader(
@@ -85,7 +92,7 @@ class CTCDataModule(LightningDataModule):
 
     def predict_dataloader(self):
         print("Using test_dataloader for predictions.")
-        return self.test_dataloader(self)
+        return self.test_dataloader()
 
     def get_w2i_and_i2w(self):
         try:

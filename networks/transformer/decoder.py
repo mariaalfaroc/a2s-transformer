@@ -128,10 +128,10 @@ class Decoder(nn.Module):
         # memory_pad_mask.shape = [batch_size, src_sec_len]
         # Value 1 (True) means "ignored" and value 0 (False) means "not ignored"
         memory_pad_mask = torch.zeros(
-            memory.shape[:2], dtype=torch.bool, device=memory.device
+            memory.shape[:2], dtype=torch.float32, device=memory.device
         )
         for i, l in enumerate(memory_len):
-            memory_pad_mask[i, l:] = True
+            memory_pad_mask[i, l:] = 1
         return memory_pad_mask
 
     @staticmethod
@@ -181,5 +181,5 @@ class Decoder(nn.Module):
         # Pad token to be ignored by the attention mechanism
         # Value 1 (True) means "ignored" and value 0 (False) means "not ignored"
         # tgt_pad_mask.shape = [batch_size, tgt_sec_len]
-        tgt_pad_mask = tgt == 0
+        tgt_pad_mask = (tgt == 0).to(torch.float32)
         return tgt_mask, tgt_pad_mask

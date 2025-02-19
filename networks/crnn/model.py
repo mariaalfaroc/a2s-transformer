@@ -1,4 +1,3 @@
-import math
 import random
 
 import torch
@@ -27,8 +26,9 @@ class CTCTrainedCRNN(LightningModule):
             output_size=len(self.w2i),
             frame_multiplier_factor=frame_multiplier_factor,
         )
+        self.max_audio_len = max_audio_len
         self.width_reduction = self.model.cnn.width_reduction
-        self.summary(max_audio_len)
+        self.summary()
         # CTC Loss (we use the same token for padding and CTC-blank)
         self.blank_padding_token = w2i["<PAD>"]
         self.compute_ctc_loss = CTCLoss(
@@ -38,8 +38,8 @@ class CTCTrainedCRNN(LightningModule):
         self.Y = []
         self.YHat = []
 
-    def summary(self, max_audio_len):
-        summary(self.model, input_size=[1, NUM_CHANNELS, IMG_HEIGHT, max_audio_len])
+    def summary(self):
+        summary(self.model, input_size=[1, NUM_CHANNELS, IMG_HEIGHT, self.max_audio_len])
 
     def configure_optimizers(self):
         return torch.optim.Adam(self.model.parameters(), lr=1e-3, weight_decay=1e-6)
@@ -49,7 +49,7 @@ class CTCTrainedCRNN(LightningModule):
 
     def training_step(self, batch, batch_idx):
         x, xl, y, yl = batch
-        yhat = self.model(x)
+        yhat = self.forward(x)
         # ------ CTC Requirements ------
         # yhat: [batch, frames, vocab_size]
         yhat = yhat.log_softmax(dim=2)
@@ -71,10 +71,11 @@ class CTCTrainedCRNN(LightningModule):
         ]
         return y_pred_decoded
 
+    @torch.no_grad()
     def validation_step(self, batch, batch_idx):
         x, y = batch  # batch_size = 1
         # Model prediction (decoded using the vocabulary on which it was trained)
-        yhat = self.model(x)[0]
+        yhat = self.forward(x)[0]
         yhat = yhat.log_softmax(dim=-1).detach().cpu()
         yhat = self.ctc_greedy_decoder(yhat, self.i2w)
         # Decoded ground truth
@@ -83,9 +84,11 @@ class CTCTrainedCRNN(LightningModule):
         self.Y.append(y)
         self.YHat.append(yhat)
 
+    @torch.no_grad()
     def test_step(self, batch, batch_idx):
         return self.validation_step(batch, batch_idx)
 
+    @torch.no_grad()
     def on_validation_epoch_end(self, name="val", print_random_samples=False):
         metrics = compute_metrics(y_true=self.Y, y_pred=self.YHat)
         for k, v in metrics.items():
@@ -99,6 +102,7 @@ class CTCTrainedCRNN(LightningModule):
         self.Y.clear()
         self.YHat.clear()
         return metrics
-
+    
+    @torch.no_grad()
     def on_test_epoch_end(self):
         return self.on_validation_epoch_end(name="test", print_random_samples=True)

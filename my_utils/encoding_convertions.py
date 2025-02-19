@@ -123,11 +123,11 @@ class krnParser:
 
         elif not "q" in in_token:
             if "rr" in in_token:  # Multirest
-                out_token = re.findall("rr[0-9]+", in_token)[0]
+                out_token = re.findall(r"rr[0-9]+", in_token)[0]
             elif "r" in in_token:  # Rest
                 out_token = in_token.split("r")[0] + "r"
             else:  # Music note
-                out_token = re.findall("\[*\d+[.]*[a-gA-G]+[n#-]*\]*", in_token)[0]
+                out_token = re.findall(r"\[*\d+[.]*[a-gA-G]+[n#-]*\]*", in_token)[0]
 
         return out_token
 

@@ -65,37 +65,38 @@ class A2STransformer(LightningModule):
         self.ytest_i2w = ytest_i2w if ytest_i2w is not None else i2w
         self.padding_idx = w2i["<PAD>"]
         # Model
+        self.max_audio_len = max_audio_len
         self.max_seq_len = max_seq_len
         self.teacher_forcing_prob = teacher_forcing_prob
         self.encoder = Encoder(in_channels=NUM_CHANNELS)
         self.pos_2d = PositionalEncoding2D(
             num_channels=256,
             max_height=math.ceil(IMG_HEIGHT / HEIGHT_REDUCTION),
-            max_width=math.ceil(max_audio_len / WIDTH_REDUCTION),
+            max_width=math.ceil(self.max_audio_len / WIDTH_REDUCTION),
         )
         self.decoder = Decoder(
             output_size=len(self.w2i),
-            max_seq_len=max_seq_len,
+            max_seq_len=self.max_seq_len,
             num_embeddings=len(self.w2i),
             padding_idx=self.padding_idx,
             attn_window=attn_window,
         )
-        self.summary(max_audio_len)
+        self.summary()
         # Loss
         self.compute_loss = CrossEntropyLoss(ignore_index=self.padding_idx)
         # Predictions
         self.Y = []
         self.YHat = []
 
-    def summary(self, max_audio_len):
+    def summary(self):
         print("Encoder")
-        summary(self.encoder, input_size=[1, NUM_CHANNELS, IMG_HEIGHT, max_audio_len])
+        summary(self.encoder, input_size=[1, NUM_CHANNELS, IMG_HEIGHT, self.max_audio_len])
         print("Decoder")
         tgt_size = [1, self.max_seq_len]
         memory_size = [
             1,
             math.ceil(IMG_HEIGHT / HEIGHT_REDUCTION)
-            * math.ceil(max_audio_len / WIDTH_REDUCTION),
+            * math.ceil(self.max_audio_len / WIDTH_REDUCTION),
             256,
         ]
         memory_len_size = [1]
@@ -126,13 +127,16 @@ class A2STransformer(LightningModule):
     def apply_teacher_forcing(self, y):
         # y.shape = [batch_size, seq_len]
         y_errored = y.clone()
-        for i in range(y_errored.size(0)):
-            for j in range(y_errored.size(1)):
-                if (
-                    random.random() < self.teacher_forcing_prob
-                    and y[i, j] != self.padding_idx
-                ):
-                    y_errored[i, j] = random.randint(0, len(self.w2i) - 1)
+        # Create a random mask with the same shape as y_errored
+        random_mask = torch.rand_like(y_errored, dtype=torch.float) < self.teacher_forcing_prob
+        # Create a mask for non-padding tokens
+        non_padding_mask = y != self.padding_idx
+        # Combine the random mask and non-padding mask
+        combined_mask = random_mask & non_padding_mask
+        # Generate random indices for the entire matrix
+        random_indices = torch.randint(0, len(self.w2i), y_errored.shape, device=y_errored.device)
+        # Apply the random indices only where the combined mask is True
+        y_errored = torch.where(combined_mask, random_indices, y_errored)
         return y_errored
 
     def training_step(self, batch, batch_idx):
@@ -143,6 +147,7 @@ class A2STransformer(LightningModule):
         self.log("train_loss", loss, prog_bar=True, logger=True, on_epoch=True)
         return loss
 
+    @torch.no_grad()
     def validation_step(self, batch, batch_idx):
         x, y = batch
         assert x.size(0) == 1, "Inference only supports batch_size = 1"
@@ -175,9 +180,11 @@ class A2STransformer(LightningModule):
         self.Y.append(y)
         self.YHat.append(yhat)
 
+    @torch.no_grad()
     def test_step(self, batch, batch_idx):
         return self.validation_step(batch, batch_idx)
 
+    @torch.no_grad()
     def on_validation_epoch_end(self, name="val", print_random_samples=False):
         metrics = compute_metrics(y_true=self.Y, y_pred=self.YHat)
         for k, v in metrics.items():
@@ -192,5 +199,6 @@ class A2STransformer(LightningModule):
         self.YHat.clear()
         return metrics
 
+    @torch.no_grad()
     def on_test_epoch_end(self):
         return self.on_validation_epoch_end(name="test", print_random_samples=True)
