@@ -11,9 +11,7 @@ from my_utils.data_preprocessing import IMG_HEIGHT, NUM_CHANNELS
 
 
 class CTCTrainedCRNN(LightningModule):
-    def __init__(
-        self, w2i, i2w, ytest_i2w=None, max_audio_len=100, frame_multiplier_factor=8
-    ):
+    def __init__(self, w2i, i2w, ytest_i2w=None, max_audio_len=100, frame_multiplier_factor=8):
         super(CTCTrainedCRNN, self).__init__()
         # Save hyperparameters
         self.save_hyperparameters()
@@ -31,9 +29,7 @@ class CTCTrainedCRNN(LightningModule):
         self.summary()
         # CTC Loss (we use the same token for padding and CTC-blank)
         self.blank_padding_token = w2i["<PAD>"]
-        self.compute_ctc_loss = CTCLoss(
-            blank=self.blank_padding_token, zero_infinity=False
-        )
+        self.compute_ctc_loss = CTCLoss(blank=self.blank_padding_token, zero_infinity=False)
         # Predictions
         self.Y = []
         self.YHat = []
@@ -66,9 +62,7 @@ class CTCTrainedCRNN(LightningModule):
         # Merge repeated elements
         y_pred_decoded = torch.unique_consecutive(y_pred_decoded, dim=0).tolist()
         # Convert to string (remove CTC-blank token)
-        y_pred_decoded = [
-            i2w[i] for i in y_pred_decoded if i != self.blank_padding_token
-        ]
+        y_pred_decoded = [i2w[i] for i in y_pred_decoded if i != self.blank_padding_token]
         return y_pred_decoded
 
     @torch.no_grad()
@@ -102,7 +96,7 @@ class CTCTrainedCRNN(LightningModule):
         self.Y.clear()
         self.YHat.clear()
         return metrics
-    
+
     @torch.no_grad()
     def on_test_epoch_end(self):
         return self.on_validation_epoch_end(name="test", print_random_samples=True)

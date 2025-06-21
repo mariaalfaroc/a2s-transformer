@@ -53,9 +53,7 @@ def test(
         ytest_i2w = datamodule.test_ds.i2w
 
         # Model
-        model = CTCTrainedCRNN.load_from_checkpoint(
-            checkpoint_path, ytest_i2w=ytest_i2w
-        )
+        model = CTCTrainedCRNN.load_from_checkpoint(checkpoint_path, ytest_i2w=ytest_i2w)
 
     elif model_type == "transformer":
         # Data module
@@ -67,9 +65,7 @@ def test(
         ytest_i2w = datamodule.test_ds.i2w
 
         # Model
-        model = A2STransformer.load_from_checkpoint(
-            checkpoint_path, ytest_i2w=ytest_i2w
-        )
+        model = A2STransformer.load_from_checkpoint(checkpoint_path, ytest_i2w=ytest_i2w)
 
     else:
         print(f"Model type {model_type} not implemented")
@@ -79,9 +75,7 @@ def test(
     trainer = Trainer(
         logger=WandbLogger(
             project="A2S-Poly-ICASSP",
-            group=f"{model_type}"
-            if not use_voice_change_token
-            else f"{model_type}-VCT",
+            group=f"{model_type}" if not use_voice_change_token else f"{model_type}-VCT",
             name=f"Train-{src_ds_name}_Test-{ds_name}",
             log_model=False,
         ),

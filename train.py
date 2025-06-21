@@ -86,9 +86,7 @@ def train(
     # Train, validate and test
     callbacks = [
         ModelCheckpoint(
-            dirpath=f"weights/{model_type}"
-            if not use_voice_change_token
-            else f"weights/{model_type}-VCT",
+            dirpath=f"weights/{model_type}" if not use_voice_change_token else f"weights/{model_type}-VCT",
             filename=ds_name,
             monitor="val_sym-er",
             verbose=True,
@@ -115,9 +113,7 @@ def train(
     trainer = Trainer(
         logger=WandbLogger(
             project="A2S-Poly-ICASSP",
-            group=f"{model_type}"
-            if not use_voice_change_token
-            else f"{model_type}-VCT",
+            group=f"{model_type}" if not use_voice_change_token else f"{model_type}-VCT",
             name=f"Train-{ds_name}_Test-{ds_name}",
             log_model=False,
         ),

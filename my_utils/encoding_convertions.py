@@ -32,9 +32,7 @@ class krnParser:
         while "**kern" not in in_src[it_headers]:
             it_headers += 1
         pass
-        columns_to_process = np.where(
-            np.array(in_src[it_headers].split("\t")) == "**kern"
-        )[0]
+        columns_to_process = np.where(np.array(in_src[it_headers].split("\t")) == "**kern")[0]
 
         # Locating lines with comments (to be removed)
         in_src_nocomments = []
@@ -61,9 +59,7 @@ class krnParser:
                 if in_score[it_voice, single_position] == "*":
                     new_element = in_score[
                         it_voice,
-                        max(
-                            np.where(np.char.startswith(in_score[it_voice], "*clef"))[0]
-                        ),
+                        max(np.where(np.char.startswith(in_score[it_voice], "*clef"))[0]),
                     ]
                     in_score[it_voice, single_position] = new_element
                 pass
@@ -80,11 +76,7 @@ class krnParser:
         out_score = []
         for it_voice in range(in_file.shape[1]):
             in_voice = in_file[:, it_voice].tolist()
-            out_voice = [
-                self.cleanKernToken(u)
-                for u in in_voice
-                if self.cleanKernToken(u) is not None
-            ]
+            out_voice = [self.cleanKernToken(u) for u in in_voice if self.cleanKernToken(u) is not None]
 
             out_score.append(out_voice)
         pass
@@ -99,17 +91,13 @@ class krnParser:
         """Convert a kern token to its CLEAN equivalent."""
         out_token = None  # Default
 
-        if any(
-            [u in in_token for u in self.reserved_words]
-        ):  # Relevant reserved tokens
+        if any([u in in_token for u in self.reserved_words]):  # Relevant reserved tokens
             out_token = in_token
 
         elif in_token == self.reserved_dot:  # Case when using "." for sync. voices
             out_token = self.reserved_dot_EncodedCharacter
 
-        elif (
-            in_token.strip() == self.clef_change_other_voices
-        ):  # Clef change in other voices
+        elif in_token.strip() == self.clef_change_other_voices:  # Clef change in other voices
             out_token = in_token
 
         elif any([in_token.startswith(u) for u in self.comment_symbols]):  # Comments

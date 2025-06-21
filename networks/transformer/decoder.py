@@ -82,9 +82,7 @@ class Decoder(nn.Module):
         # tgt.shape = [batch_size, tgt_sec_len]
 
         # Embedding + 1D PE
-        tgt_emb = self.pos_1d(
-            self.embedding(tgt)
-        )  # tgt_emb.shape = [batch_size, tgt_sec_len, emb_dim]
+        tgt_emb = self.pos_1d(self.embedding(tgt))  # tgt_emb.shape = [batch_size, tgt_sec_len, emb_dim]
 
         # Get memory key padding mask
         # Ignore padding in the encoder output
@@ -108,9 +106,7 @@ class Decoder(nn.Module):
 
         # Classification block
         tgt_pred = tgt_pred.permute(0, 2, 1).contiguous()
-        tgt_pred = self.out_layer(
-            tgt_pred
-        )  # tgt_pred.shape = [batch_size, output_size, tgt_sec_len]
+        tgt_pred = self.out_layer(tgt_pred)  # tgt_pred.shape = [batch_size, output_size, tgt_sec_len]
 
         return tgt_pred
 
@@ -127,17 +123,13 @@ class Decoder(nn.Module):
         # memory_len.shape = [batch_size]
         # memory_pad_mask.shape = [batch_size, src_sec_len]
         # Value 1 (True) means "ignored" and value 0 (False) means "not ignored"
-        memory_pad_mask = torch.zeros(
-            memory.shape[:2], dtype=torch.float32, device=memory.device
-        )
+        memory_pad_mask = torch.zeros(memory.shape[:2], dtype=torch.float32, device=memory.device)
         for i, l in enumerate(memory_len):
             memory_pad_mask[i, l:] = 1
         return memory_pad_mask
 
     @staticmethod
-    def create_variable_window_mask( 
-        size, window_size, dtype=torch.float32, device=torch.device("cpu")
-    ):
+    def create_variable_window_mask(size, window_size, dtype=torch.float32, device=torch.device("cpu")):
         """
         Creates a mask for the target sequence with a variable window size.
 
@@ -169,13 +161,9 @@ class Decoder(nn.Module):
         # ATTENTION WINDOW MECHANISM
         # We limit the number of past tokens the decoder can see
         if self.attn_window > 0:
-            tgt_mask = self.create_variable_window_mask(
-                tgt_sec_len, self.attn_window, device=tgt.device
-            )
+            tgt_mask = self.create_variable_window_mask(tgt_sec_len, self.attn_window, device=tgt.device)
         else:
-            tgt_mask = nn.Transformer.generate_square_subsequent_mask(
-                tgt_sec_len, tgt.device
-            )
+            tgt_mask = nn.Transformer.generate_square_subsequent_mask(tgt_sec_len, tgt.device)
 
         # 0 == "<PAD>"
         # Pad token to be ignored by the attention mechanism

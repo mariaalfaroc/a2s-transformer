@@ -32,7 +32,7 @@ class CTCDataModule(LightningDataModule):
         self.batch_size = batch_size
         self.num_workers = num_workers
         self.width_reduction = width_reduction  # Must be overrided with that of the model!
-        
+
         # Datasets
         # To prevent executing setup() twice
         self.train_ds = None
@@ -177,9 +177,7 @@ class CTCDataset(Dataset):
             # x.shape = [channels, height, width]
             return (
                 x,
-                (x.shape[2] // self.width_reduction)
-                * self.width_reduction
-                * self.frame_multiplier_factor,
+                (x.shape[2] // self.width_reduction) * self.width_reduction * self.frame_multiplier_factor,
                 y,
                 len(y),
             )
@@ -224,9 +222,7 @@ class CTCDataset(Dataset):
             with open(partition_file, "r") as file:
                 for s in file.read().splitlines():
                     s = s.strip()
-                    transcript = self.krn_parser.convert(
-                        src_file=f"Quartets/krn/{s}.krn"
-                    )
+                    transcript = self.krn_parser.convert(src_file=f"Quartets/krn/{s}.krn")
                     vocab.extend(transcript)
         vocab = sorted(set(vocab))
 
@@ -253,14 +249,10 @@ class CTCDataset(Dataset):
         for t in os.listdir("Quartets/krn"):
             if t.endswith(".krn") and not t.startswith("."):
                 # Max transcript length
-                transcript = self.krn_parser.convert(
-                    src_file=os.path.join("Quartets/krn", t)
-                )
+                transcript = self.krn_parser.convert(src_file=os.path.join("Quartets/krn", t))
                 max_seq_len = max(max_seq_len, len(transcript))
                 # Max audio length
-                audio = preprocess_audio(
-                    path=os.path.join("Quartets/flac", t[:-4] + ".flac")
-                )
+                audio = preprocess_audio(path=os.path.join("Quartets/flac", t[:-4] + ".flac"))
                 max_audio_len = max(max_audio_len, audio.shape[2])
                 # Max frame multiplier factor
                 max_frame_multiplier_factor = max(

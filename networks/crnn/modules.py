@@ -58,9 +58,7 @@ class CRNN(nn.Module):
         self.cnn = CNN()
         # RNN
         self.num_frame_repeats = self.cnn.width_reduction * frame_multiplier_factor
-        self.rnn_input_size = self.cnn.out_channels * (
-            IMG_HEIGHT // self.cnn.height_reduction
-        )
+        self.rnn_input_size = self.cnn.out_channels * (IMG_HEIGHT // self.cnn.height_reduction)
         self.rnn = RNN(input_size=self.rnn_input_size, output_size=output_size)
 
     def forward(self, x):

@@ -150,9 +150,7 @@ class DSCBlock(nn.Module):
         self.activation = activation()
         self.conv1 = DepthSepConv2D(in_c, out_c, kernel_size=(3, 3))
         self.conv2 = DepthSepConv2D(out_c, out_c, kernel_size=(3, 3))
-        self.conv3 = DepthSepConv2D(
-            out_c, out_c, kernel_size=(3, 3), padding=(1, 1), stride=stride
-        )
+        self.conv3 = DepthSepConv2D(out_c, out_c, kernel_size=(3, 3), padding=(1, 1), stride=stride)
         self.norm_layer = nn.InstanceNorm2d(
             out_c,
             eps=0.001,

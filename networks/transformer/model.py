@@ -24,18 +24,10 @@ class PositionalEncoding2D(nn.Module):
         den = torch.pow(10000, torch.arange(0, num_channels // 2, 2) / num_channels)
 
         pe = torch.zeros(1, max_height, max_width, num_channels)
-        pe[0, :, :, 0 : num_channels // 2 : 2] = (
-            torch.sin(pos_w / den).unsqueeze(0).repeat(max_height, 1, 1)
-        )
-        pe[0, :, :, 1 : num_channels // 2 : 2] = (
-            torch.cos(pos_w / den).unsqueeze(0).repeat(max_height, 1, 1)
-        )
-        pe[0, :, :, num_channels // 2 :: 2] = (
-            torch.sin(pos_h / den).unsqueeze(1).repeat(1, max_width, 1)
-        )
-        pe[0, :, :, (num_channels // 2) + 1 :: 2] = (
-            torch.cos(pos_h / den).unsqueeze(1).repeat(1, max_width, 1)
-        )
+        pe[0, :, :, 0 : num_channels // 2 : 2] = torch.sin(pos_w / den).unsqueeze(0).repeat(max_height, 1, 1)
+        pe[0, :, :, 1 : num_channels // 2 : 2] = torch.cos(pos_w / den).unsqueeze(0).repeat(max_height, 1, 1)
+        pe[0, :, :, num_channels // 2 :: 2] = torch.sin(pos_h / den).unsqueeze(1).repeat(1, max_width, 1)
+        pe[0, :, :, (num_channels // 2) + 1 :: 2] = torch.cos(pos_h / den).unsqueeze(1).repeat(1, max_width, 1)
         pe = pe.permute(0, 3, 1, 2).contiguous()
         self.register_buffer("pe", pe)
 
@@ -95,8 +87,7 @@ class A2STransformer(LightningModule):
         tgt_size = [1, self.max_seq_len]
         memory_size = [
             1,
-            math.ceil(IMG_HEIGHT / HEIGHT_REDUCTION)
-            * math.ceil(self.max_audio_len / WIDTH_REDUCTION),
+            math.ceil(IMG_HEIGHT / HEIGHT_REDUCTION) * math.ceil(self.max_audio_len / WIDTH_REDUCTION),
             256,
         ]
         memory_len_size = [1]
@@ -170,9 +161,7 @@ class A2STransformer(LightningModule):
             if y_out_hat_word == EOS_TOKEN:
                 break
 
-            y_in = torch.cat(
-                [y_in, torch.tensor([[y_out_hat_token]]).long().to(x.device)], dim=1
-            )
+            y_in = torch.cat([y_in, torch.tensor([[y_out_hat_token]]).long().to(x.device)], dim=1)
 
         # Decoded ground truth
         y = [self.ytest_i2w[i.item()] for i in y[0][1:]]  # Remove SOS_TOKEN

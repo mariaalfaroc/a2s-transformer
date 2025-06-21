@@ -139,9 +139,7 @@ class ARDataset(CTCDataset):
             with open(partition_file, "r") as file:
                 for s in file.read().splitlines():
                     s = s.strip()
-                    transcript = self.krn_parser.convert(
-                        src_file=f"Quartets/krn/{s}.krn"
-                    )
+                    transcript = self.krn_parser.convert(src_file=f"Quartets/krn/{s}.krn")
                     vocab.extend(transcript)
         vocab = [SOS_TOKEN, EOS_TOKEN] + vocab
         vocab = sorted(set(vocab))
@@ -159,6 +157,4 @@ class ARDataset(CTCDataset):
     def get_number_of_frames(self, audio):
         # audio is the output of preprocess_audio
         # audio.shape = [1, freq_bins, time_frames]
-        return math.ceil(audio.shape[1] / HEIGHT_REDUCTION) * math.ceil(
-            audio.shape[2] / WIDTH_REDUCTION
-        )
+        return math.ceil(audio.shape[1] / HEIGHT_REDUCTION) * math.ceil(audio.shape[2] / WIDTH_REDUCTION)

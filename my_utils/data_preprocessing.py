@@ -51,9 +51,7 @@ def pad_batch_images(x):
 
 def pad_batch_transcripts(x, dtype=torch.int32):
     max_length = max(x, key=lambda sample: sample.shape[0]).shape[0]
-    x = torch.stack(
-        [F.pad(i, pad=(0, max_length - i.shape[0]), value=PAD_INDEX) for i in x], dim=0
-    )
+    x = torch.stack([F.pad(i, pad=(0, max_length - i.shape[0]), value=PAD_INDEX) for i in x], dim=0)
     x = x.type(dtype=dtype)
     return x
 
