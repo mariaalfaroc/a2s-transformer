@@ -171,7 +171,7 @@ class CTCDataset(Dataset):
         max_lens = self.check_and_retrieve_max_lens()
         self.max_seq_len = max_lens["max_seq_len"]
         self.max_audio_len = max_lens["max_audio_len"]
-        self.frame_multiplier_factor = max_lens["frame_multiplier_factor"]
+        self.frame_multiplier_factor = max_lens["max_frame_multiplier_factor"]
 
     def __len__(self):
         return len(self.ds)
