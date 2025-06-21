@@ -10,7 +10,16 @@
   <img src='https://img.shields.io/badge/python-3.9.0-orange' alt='Python'>
   <img src='https://img.shields.io/badge/PyTorch-%23EE4C2C.svg?style=flat&logo=PyTorch&logoColor=white' alt='PyTorch'>
   <img src='https://img.shields.io/badge/-Lightning-792ee5?logo=pytorchlightning&logoColor=white' alt='Lightning'>
+  <img src='https://img.shields.io/badge/%F0%9F%A4%97%20HuggingFace-white' alt='HuggingFace'>
   <img src='https://img.shields.io/static/v1?label=License&message=MIT&color=blue' alt='License'>
+</p>
+
+<p align="center">
+  <strong>Quartets Collection (ICASSP 2024)</strong> 
+  </br>
+  <a href="https://huggingface.co/collections/PRAIG/quartets-685198e11ed8ac47e09c4a4d">
+    <img align="center" src="https://huggingface.co/datasets/huggingface/badges/resolve/main/dataset-on-hf-md.svg">
+  </a>
 </p>
 
 <p align='center'>
@@ -33,7 +42,7 @@ To address the aforementioned conditions, **we introduce an alternative learning
 
 ## How To Use
 
-We consider the *Quartets* collection that comprises three datasets of string quartets by Haydn, Mozart, and Beethoven. This collection is available upon [request](mailto:malfaro@dlsi.ua.es) and must be placed in the main [`repository`](.) folder to be able to replicate our experiments. 
+We consider the *Quartets* collection that comprises three datasets of string quartets by Haydn, Mozart, and Beethoven. This collection is available on [HuggingFace](https://huggingface.co/collections/PRAIG/quartets-685198e11ed8ac47e09c4a4d).
 
 Furthermore, you'll need to meet certain requirements which are specified in the [`Dockerfile`](Dockerfile) to run the code. Alternatively, you can set up a virtual environment if preferred.
 

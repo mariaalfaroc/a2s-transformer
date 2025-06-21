@@ -16,10 +16,12 @@ def set_pad_index(index: int):
     PAD_INDEX = index
 
 
-def get_spectrogram_from_file(path: str) -> np.ndarray:
-    y, fs = librosa.load(path, sr=22050)
+def get_spectrogram_from_raw_audio(raw_audio: np.ndarray, sr: float) -> np.ndarray:
+    new_sr = 22050
+    y = librosa.resample(raw_audio, orig_sr=sr, target_sr=new_sr)
+
     stft_fmax = 2093
-    stft_frequency_filter_max = librosa.fft_frequencies(sr=fs, n_fft=2048) <= stft_fmax
+    stft_frequency_filter_max = librosa.fft_frequencies(sr=new_sr, n_fft=2048) <= stft_fmax
 
     stft = librosa.stft(y, hop_length=512, win_length=2048, window="hann")
     stft = stft[stft_frequency_filter_max]
@@ -31,21 +33,23 @@ def get_spectrogram_from_file(path: str) -> np.ndarray:
 
 
 @MEMORY.cache
-def preprocess_audio(path: str) -> torch.Tensor:
+def preprocess_audio(raw_audio: np.ndarray, sr: float, dtype=torch.float32) -> torch.Tensor:
     # Get spectrogram (already normalized)
-    x = get_spectrogram_from_file(path)
+    x = get_spectrogram_from_raw_audio(raw_audio, sr)
     # Convert to PyTorch tensor
     x = np.expand_dims(x, 0)
     x = torch.from_numpy(x)  # [1, freq_bins, time_frames]
+    x = x.type(dtype=dtype)
     return x
 
 
 ################################# CTC PREPROCESSING:
 
 
-def pad_batch_images(x):
+def pad_batch_audios(x, dtype=torch.float32):
     max_width = max(x, key=lambda sample: sample.shape[2]).shape[2]
     x = torch.stack([F.pad(i, pad=(0, max_width - i.shape[2])) for i in x], dim=0)
+    x = x.type(dtype=dtype)
     return x
 
 
@@ -58,11 +62,11 @@ def pad_batch_transcripts(x, dtype=torch.int32):
 
 def ctc_batch_preparation(batch):
     x, xl, y, yl = zip(*batch)
-    # Zero-pad images to maximum batch image width
-    x = pad_batch_images(x)
+    # Zero-pad audios to maximum batch audio width
+    x = pad_batch_audios(x, dtype=torch.float32)
     xl = torch.tensor(xl, dtype=torch.int32)
     # Zero-pad transcripts to maximum batch transcript length
-    y = pad_batch_transcripts(y)
+    y = pad_batch_transcripts(y, dtype=torch.int32)
     yl = torch.tensor(yl, dtype=torch.int32)
     return x, xl, y, yl
 
@@ -72,8 +76,8 @@ def ctc_batch_preparation(batch):
 
 def ar_batch_preparation(batch):
     x, xl, y = zip(*batch)
-    # Zero-pad images to maximum batch image width
-    x = pad_batch_images(x)
+    # Zero-pad audios to maximum batch audio width
+    x = pad_batch_audios(x, dtype=torch.float32)
     xl = torch.tensor(xl, dtype=torch.int32)
     # Decoder input: transcript[:-1]
     y_in = [i[:-1] for i in y]

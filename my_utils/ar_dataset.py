@@ -4,7 +4,7 @@ import torch
 from torch.utils.data import DataLoader
 from lightning.pytorch import LightningDataModule
 
-from my_utils.ctc_dataset import CTCDataset
+from my_utils.ctc_dataset import CTCDataset, load_dataset, SPLITS
 from my_utils.data_preprocessing import preprocess_audio, ar_batch_preparation
 from networks.transformer.encoder import HEIGHT_REDUCTION, WIDTH_REDUCTION
 
@@ -120,27 +120,28 @@ class ARDataset(CTCDataset):
         self.max_seq_len += 1  # Add 1 for EOS_TOKEN
 
     def __getitem__(self, idx):
-        x = preprocess_audio(path=self.X[idx])
-        y = self.preprocess_transcript(path=self.Y[idx])
+        x = preprocess_audio(
+            raw_audio=self.ds[idx]["audio"]["array"], sr=self.ds[idx]["audio"]["sampling_rate"], dtype=torch.float32
+        )
+        y = self.preprocess_transcript(text=self.ds[idx]["transcript"])
         if self.partition_type == "train":
             return x, self.get_number_of_frames(x), y
         return x, y
 
-    def preprocess_transcript(self, path: str):
-        y = self.krn_parser.convert(src_file=path)
+    def preprocess_transcript(self, text: str):
+        y = self.krn_parser.convert(text=text)
         y = [SOS_TOKEN] + y + [EOS_TOKEN]
         y = [self.w2i[w] for w in y]
         return torch.tensor(y, dtype=torch.int64)
 
     def make_vocabulary(self):
+        full_ds = load_dataset(f"PRAIG/{self.ds_name}-quartets")
+
         vocab = []
-        for partition_type in ["train", "val", "test"]:
-            partition_file = f"Quartets/partitions/{self.ds_name}/{partition_type}.txt"
-            with open(partition_file, "r") as file:
-                for s in file.read().splitlines():
-                    s = s.strip()
-                    transcript = self.krn_parser.convert(src_file=f"Quartets/krn/{s}.krn")
-                    vocab.extend(transcript)
+        for split in SPLITS:
+            for text in full_ds[split]["transcript"]:
+                transcript = self.krn_parser.convert(text=text)
+                vocab.extend(transcript)
         vocab = [SOS_TOKEN, EOS_TOKEN] + vocab
         vocab = sorted(set(vocab))
 

@@ -3,6 +3,7 @@ import json
 import math
 
 import torch
+from datasets import load_dataset
 from torch.utils.data import Dataset
 from torch.utils.data import DataLoader
 from lightning.pytorch import LightningDataModule
@@ -15,6 +16,7 @@ from my_utils.data_preprocessing import (
 )
 
 DATASETS = ["quartets", "beethoven", "mozart", "haydn"]
+SPLITS = ["train", "val", "test"]
 
 
 class CTCDataModule(LightningDataModule):
@@ -144,14 +146,10 @@ class CTCDataset(Dataset):
         assert self.ds_name in DATASETS, f"Invalid dataset name: {self.ds_name}"
 
         # Check partition type
-        assert self.partition_type in [
-            "train",
-            "val",
-            "test",
-        ], f"Invalid partition type: {self.partition_type}"
+        assert self.partition_type in SPLITS, f"Invalid partition type: {self.partition_type}"
 
         # Get audios and transcripts files
-        self.X, self.Y = self.get_audios_and_transcripts_files()
+        self.ds = load_dataset(f"PRAIG/{self.ds_name}-quartets", split=self.partition_type)
 
         # Check and retrieve vocabulary
         vocab_folder = os.path.join("Quartets", "vocabs")
@@ -164,15 +162,25 @@ class CTCDataset(Dataset):
         # Modify the global PAD_INDEX to match w2i["<PAD>"]
         set_pad_index(self.w2i["<PAD>"])
 
+        # Check and retrive max lengths
         # Set max_seq_len, max_audio_len and frame_multiplier_factor
-        self.set_max_lens()
+        max_lens_folder = os.path.join("Quartets", "max_lens")
+        os.makedirs(max_lens_folder, exist_ok=True)
+        max_lens_name = vocab_name
+        self.max_lens_path = os.path.join(max_lens_folder, max_lens_name)
+        max_lens = self.check_and_retrieve_max_lens()
+        self.max_seq_len = max_lens["max_seq_len"]
+        self.max_audio_len = max_lens["max_audio_len"]
+        self.frame_multiplier_factor = max_lens["frame_multiplier_factor"]
 
     def __len__(self):
-        return len(self.X)
+        return len(self.ds)
 
     def __getitem__(self, idx):
-        x = preprocess_audio(path=self.X[idx])
-        y = self.preprocess_transcript(path=self.Y[idx])
+        x = preprocess_audio(
+            raw_audio=self.ds[idx]["audio"]["array"], sr=self.ds[idx]["audio"]["sampling_rate"], dtype=torch.float32
+        )
+        y = self.preprocess_transcript(text=self.ds[idx]["transcript"])
         if self.partition_type == "train":
             # x.shape = [channels, height, width]
             return (
@@ -183,22 +191,10 @@ class CTCDataset(Dataset):
             )
         return x, y
 
-    def preprocess_transcript(self, path: str):
-        y = self.krn_parser.convert(src_file=path)
+    def preprocess_transcript(self, text: str):
+        y = self.krn_parser.convert(text=text)
         y = [self.w2i[w] for w in y]
         return torch.tensor(y, dtype=torch.int32)
-
-    def get_audios_and_transcripts_files(self):
-        partition_file = f"Quartets/partitions/{self.ds_name}/{self.partition_type}.txt"
-
-        audios = []
-        transcripts = []
-        with open(partition_file, "r") as file:
-            for s in file.read().splitlines():
-                s = s.strip()
-                audios.append(f"Quartets/flac/{s}.flac")
-                transcripts.append(f"Quartets/krn/{s}.krn")
-        return audios, transcripts
 
     def check_and_retrieve_vocabulary(self):
         w2i = {}
@@ -216,14 +212,13 @@ class CTCDataset(Dataset):
         return w2i, i2w
 
     def make_vocabulary(self):
+        full_ds = load_dataset(f"PRAIG/{self.ds_name}-quartets")
+
         vocab = []
-        for partition_type in ["train", "val", "test"]:
-            partition_file = f"Quartets/partitions/{self.ds_name}/{partition_type}.txt"
-            with open(partition_file, "r") as file:
-                for s in file.read().splitlines():
-                    s = s.strip()
-                    transcript = self.krn_parser.convert(src_file=f"Quartets/krn/{s}.krn")
-                    vocab.extend(transcript)
+        for split in SPLITS:
+            for text in full_ds[split]["transcript"]:
+                transcript = self.krn_parser.convert(text=text)
+                vocab.extend(transcript)
         vocab = sorted(set(vocab))
 
         w2i = {}
@@ -236,7 +231,20 @@ class CTCDataset(Dataset):
 
         return w2i, i2w
 
-    def set_max_lens(self):
+    def check_and_retrieve_max_lens(self):
+        max_lens = {}
+
+        if os.path.isfile(self.max_lens_path):
+            with open(self.max_lens_path, "r") as file:
+                max_lens = json.load(file)
+        else:
+            max_lens = self.make_max_lens()
+            with open(self.max_lens_path, "w") as file:
+                json.dump(max_lens, file)
+
+        return max_lens
+
+    def make_max_lens(self):
         # Set the maximum lengths for the whole QUARTETS collection:
         # 1) Get the maximum transcript length
         # 2) Get the maximum audio length
@@ -246,13 +254,20 @@ class CTCDataset(Dataset):
         max_seq_len = 0
         max_audio_len = 0
         max_frame_multiplier_factor = 0
-        for t in os.listdir("Quartets/krn"):
-            if t.endswith(".krn") and not t.startswith("."):
+
+        full_ds = load_dataset("PRAIG/quartets-quartets")
+        for split in SPLITS:
+            for sample in full_ds[split]:
                 # Max transcript length
-                transcript = self.krn_parser.convert(src_file=os.path.join("Quartets/krn", t))
+                transcript = self.krn_parser.convert(text=sample["transcript"])
                 max_seq_len = max(max_seq_len, len(transcript))
+
                 # Max audio length
-                audio = preprocess_audio(path=os.path.join("Quartets/flac", t[:-4] + ".flac"))
+                audio = preprocess_audio(
+                    raw_audio=sample["audio"]["array"],
+                    sr=sample["audio"]["sampling_rate"],
+                    dtype=torch.float32,
+                )
                 max_audio_len = max(max_audio_len, audio.shape[2])
                 # Max frame multiplier factor
                 max_frame_multiplier_factor = max(
@@ -260,6 +275,8 @@ class CTCDataset(Dataset):
                     math.ceil(((2 * len(transcript)) + 1) / audio.shape[2]),
                 )
 
-        self.max_seq_len = max_seq_len
-        self.max_audio_len = max_audio_len
-        self.frame_multiplier_factor = max_frame_multiplier_factor
+        return {
+            "max_seq_len": max_seq_len,
+            "max_audio_len": max_audio_len,
+            "max_frame_multiplier_factor": max_frame_multiplier_factor,
+        }

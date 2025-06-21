@@ -22,10 +22,9 @@ class krnParser:
 
     # ---------------------------------------------------------------------------- AUXILIARY FUNCTIONS
 
-    def _readSrcFile(self, file_path: str) -> np.ndarray:
-        """Read polyphonic kern file and adequate the format for further processes."""
-        with open(file_path) as fin:
-            in_src = fin.read().splitlines()
+    def _readSrcFile(self, text: str) -> np.ndarray:
+        """Adequate a Kern file content to the correct format for further processes."""
+        in_src = text.splitlines()
 
         # Locating line with the headers
         it_headers = 0
@@ -68,9 +67,9 @@ class krnParser:
 
         return in_score
 
-    def cleanKernFile(self, file_path: str) -> np.ndarray:
+    def cleanKernFile(self, text: str) -> np.ndarray:
         """Convert complete kern sequence to CLEAN kern format."""
-        in_file = self._readSrcFile(file_path=file_path)
+        in_file = self._readSrcFile(text=text)
 
         # Processing individual voices
         out_score = []
@@ -121,8 +120,8 @@ class krnParser:
 
     # ---------------------------------------------------------------------------- CONVERT CALL
 
-    def convert(self, src_file: str) -> List[str]:
-        out = self.cleanKernFile(src_file).T
+    def convert(self, text: str) -> List[str]:
+        out = self.cleanKernFile(text).T
 
         out_line = []
         for t in out:

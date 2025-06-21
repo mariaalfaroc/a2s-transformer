@@ -4,3 +4,7 @@ lightning
 music21
 pyMV2H
 torchinfo
+huggingface_hub
+datasets
+wandb
+rich
