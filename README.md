@@ -46,10 +46,21 @@ We consider the *Quartets* collection that comprises three datasets of string qu
 
 Furthermore, you'll need to meet certain requirements which are specified in the [`Dockerfile`](Dockerfile) to run the code. Alternatively, you can set up a virtual environment if preferred.
 
+> **Note**: This project uses [Weights & Biases (W\&B)](https://wandb.ai/) for experiment tracking. To use it, you must either:
+>
+> * Log in interactively with `wandb login` (you’ll be prompted to paste your API key), or
+> * Set the `WANDB_API_KEY` environment variable manually:
+>
+>   ```bash
+>   export WANDB_API_KEY=your_key_here
+>   ```
+
 Once you have prepared your environment (either a Docker container or a virtual environment), you are ready to begin. Execute the [`run_exps.sh`](run_exps.sh) script to replicate the experiments from our work:
+
 ```bash
 bash run_exps.sh
 ```
+
 
 ## Citations
 
